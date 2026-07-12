@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -8,7 +8,11 @@ import { UserPlus, Eye, EyeOff } from "lucide-react";
 
 export default function SignupPage() {
   const router = useRouter();
-  const supabase = createClient();
+  const [supabase, setSupabase] = useState<ReturnType<typeof createClient>>(null);
+
+  useEffect(() => {
+    setSupabase(createClient());
+  }, []);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -20,13 +24,29 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [passwordStrength, setPasswordStrength] = useState(0);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === "password") {
+      // Simple password strength indicator
+      let strength = 0;
+      if (value.length >= 6) strength += 1;
+      if (value.length >= 10) strength += 1;
+      if (/[A-Z]/.test(value)) strength += 1;
+      if (/[0-9]/.test(value)) strength += 1;
+      if (/[^A-Za-z0-9]/.test(value)) strength += 1;
+      setPasswordStrength(strength);
+    }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!supabase) {
+      setError("Client not ready. Please refresh the page.");
+      return;
+    }
     setLoading(true);
     setError(null);
 
@@ -53,34 +73,56 @@ export default function SignupPage() {
       return;
     }
 
-    // Check if email confirmation is required
+    // Check if email confirmation is required (Supabase setting)
     if (authData.user.identities?.length === 0) {
       setError("An account with this email already exists.");
       setLoading(false);
       return;
     }
 
-    // 2. Create profile via server API endpoint
+    // 2. Create profile — tries two approaches:
+    //    a. Via the browser Supabase client (works when email confirmation is OFF)
+    //    b. Falls back to the API with service-role (works when email confirmation is ON)
+    let profileCreated = false;
     try {
-      const profileRes = await fetch("/api/profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fullName: formData.fullName,
-          email: formData.email,
-          phone: formData.phone || null,
-          defaultAddress: formData.defaultAddress || null,
-        }),
+      const { error: profileError } = await supabase.from("profiles").insert({
+        id: authData.user.id,
+        full_name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone || null,
+        default_address: formData.defaultAddress || null,
       });
 
-      if (!profileRes.ok) {
-        const profileData = await profileRes.json();
-        console.error("Profile creation error:", profileData.error);
-        // Auth user was created, so we can still proceed
+      if (!profileError) {
+        profileCreated = true;
+      } else {
+        console.error("Client-side profile creation failed:", profileError);
       }
     } catch (err) {
-      console.error("Profile creation error:", err);
-      // Non-blocking — auth user exists
+      console.error("Client-side profile creation error:", err);
+    }
+
+    // Fallback: use API with service-role client (bypasses RLS)
+    if (!profileCreated) {
+      try {
+        const res = await fetch("/api/profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: authData.user.id, // explicit user ID for service-role fallback
+            fullName: formData.fullName,
+            email: formData.email,
+            phone: formData.phone || null,
+            defaultAddress: formData.defaultAddress || null,
+          }),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          console.error("Service-role profile creation failed:", data.error);
+        }
+      } catch (err) {
+        console.error("Service-role profile creation error:", err);
+      }
     }
 
     router.push("/");
@@ -183,11 +225,40 @@ export default function SignupPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A9283] hover:text-[#4A6B6D]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A9283] hover:text-[#4A6B6D] transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {/* Password strength indicator */}
+              {formData.password.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((level) => (
+                      <div
+                        key={level}
+                        className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                          passwordStrength >= level
+                            ? passwordStrength <= 2
+                              ? "bg-red-400"
+                              : passwordStrength <= 3
+                                ? "bg-amber-400"
+                                : "bg-emerald-400"
+                            : "bg-gray-200"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-xs text-[#8A9283]">
+                    {passwordStrength <= 2
+                      ? "Weak — add uppercase, numbers & symbols"
+                      : passwordStrength <= 3
+                        ? "Good — adding symbols would make it strong"
+                        : "Strong password!"}
+                  </p>
+                </div>
+              )}
             </div>
 
             {error && (

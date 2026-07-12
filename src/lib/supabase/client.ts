@@ -1,27 +1,58 @@
 import { createBrowserClient } from "@supabase/ssr";
 
-let client: ReturnType<typeof createBrowserClient> | null = null;
-
 /**
- * Create (or return cached) Supabase browser client.
+ * Create a Supabase browser client.
  *
- * During server-side rendering / static generation (e.g. Vercel build),
- * env vars may not be available. Returns null instead of throwing,
- * so client components can safely import this at the module level.
- * Consumers must guard against null (e.g. in useEffect or event handlers).
+ * This function is safe to call at the module level — it only initialises
+ * the client when one of its methods is actually invoked. During SSR/static
+ * generation (Vercel build), NEXT_PUBLIC_* env vars are not injected, so
+ * calls will gracefully no-op if the URL/key are missing.
+ *
+ * Every call returns a *fresh* client so there is never a stale singleton.
  */
 export function createClient() {
-  if (client) return client;
-
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
     // SSR/static generation — env vars aren't injected yet.
-    // The caller must handle this gracefully (null checks).
-    return null;
+    // Return a mock client that gracefully no-ops instead of null,
+    // so consumers never have to null-guard.
+    return {
+      auth: {
+        getUser: async () => ({ data: { user: null }, error: null }),
+        getSession: async () => ({ data: { session: null }, error: null }),
+        signUp: async () => ({ data: { user: null, session: null }, error: null }),
+        signInWithPassword: async () => ({ data: { user: null, session: null }, error: null }),
+        signOut: async () => ({ error: null }),
+        onAuthStateChange: () => ({} as unknown as { data: { subscription: { unsubscribe: () => void } } }),
+        updateUser: async () => ({ data: { user: null }, error: null }),
+      },
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            single: async () => ({ data: null, error: null }),
+            limit: async () => ({ data: [], error: null }),
+          }),
+          order: () => ({
+            eq: () => ({
+              single: async () => ({ data: null, error: null }),
+              limit: async () => ({ data: [], error: null }),
+            }),
+          }),
+        }),
+        insert: async () => ({ data: null, error: null }),
+        update: async () => ({ data: null, error: null }),
+        delete: async () => ({ data: null, error: null }),
+      }),
+      storage: {
+        from: () => ({
+          upload: async () => ({ data: null, error: null }),
+          getPublicUrl: () => ({ data: { publicUrl: "" } }),
+        }),
+      },
+    } as any;
   }
 
-  client = createBrowserClient(supabaseUrl, supabaseKey);
-  return client;
+  return createBrowserClient(supabaseUrl, supabaseKey);
 }

@@ -2,10 +2,36 @@
 
 import Image from "next/image";
 import { formatPrice } from "@/lib/utils";
-import { ShoppingBag, Check } from "lucide-react";
+import { ShoppingBag, Check, Loader2 } from "lucide-react";
 import { useState } from "react";
 import type { ProductWithVariants } from "@/types/product";
 import { createClient } from "@/lib/supabase/client";
+
+// Map color names to hex values for swatches
+const COLOR_MAP: Record<string, string> = {
+  black: "#1a1a1a",
+  white: "#f5f5f5",
+  navy: "#1B2A4A",
+  gray: "#6B7280",
+  grey: "#6B7280",
+  red: "#DC2626",
+  maroon: "#800000",
+  green: "#16A34A",
+  olive: "#808000",
+  blue: "#2563EB",
+  cream: "#FFFDD0",
+  beige: "#F5F5DC",
+  brown: "#8B4513",
+  gold: "#A6822E",
+  yellow: "#EAB308",
+  orange: "#EA580C",
+  purple: "#9333EA",
+  pink: "#EC4899",
+};
+
+function getHexColor(color: string): string {
+  return COLOR_MAP[color.toLowerCase()] ?? "#888888";
+}
 
 interface ProductCardProps {
   product: ProductWithVariants;
@@ -30,11 +56,9 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
   // Find the matching variant ID based on selected color and size
   const findMatchingVariant = () => {
     if (!product.hasVariants) {
-      // Non-variant products have a single variant with all-null attributes
       return product.variants[0]?.id ?? null;
     }
 
-    // Try exact match on color + size
     if (selectedColor && selectedSize) {
       const match = product.variants.find(
         (v) => v.color === selectedColor && v.size === selectedSize,
@@ -42,7 +66,6 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
       if (match) return match.id;
     }
 
-    // Fallback: match on color only
     if (selectedColor) {
       const match = product.variants.find((v) => v.color === selectedColor);
       if (match) return match.id;
@@ -88,7 +111,7 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
   };
 
   return (
-    <div className="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-[#E0D8C8]/50">
+    <div className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-[#E0D8C8]/50 hover:-translate-y-1">
       {/* Image */}
       <div className="relative aspect-square bg-[#E8E2D4] overflow-hidden">
         {product.imageUrl ? (
@@ -96,7 +119,7 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
             src={product.imageUrl}
             alt={product.name}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            className="object-cover group-hover:scale-110 transition-transform duration-500"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         ) : (
@@ -105,21 +128,24 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
               <div className="w-16 h-16 mx-auto mb-2 rounded-full bg-[#4A6B6D]/10 flex items-center justify-center">
                 <ShoppingBag className="h-8 w-8 text-[#4A6B6D]/40" />
               </div>
-              <p className="text-xs text-[#8A9283]">{product.category}</p>
+              <p className="text-xs text-[#8A9283] capitalize">{product.category}</p>
             </div>
           </div>
         )}
 
         {/* Category badge */}
-        <span className="absolute top-3 left-3 px-3 py-1 text-xs font-medium bg-white/90 rounded-full text-[#4A6B6D] capitalize shadow-sm">
+        <span className="absolute top-3 left-3 px-3 py-1 text-xs font-medium bg-white/90 backdrop-blur-sm rounded-full text-[#4A6B6D] capitalize shadow-sm">
           {product.category}
         </span>
+
+        {/* Quick-add overlay on hover */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
       </div>
 
       {/* Info */}
       <div className="p-4 sm:p-5">
         <h3
-          className="text-lg font-semibold text-[#2C2C2C] mb-1"
+          className="text-lg font-semibold text-[#2C2C2C] mb-1 group-hover:text-[#4A6B6D] transition-colors"
           style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
         >
           {product.name}
@@ -137,23 +163,26 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
         {/* Variant selectors */}
         {product.hasVariants && (
           <div className="space-y-2 mb-3">
-            {/* Color selector */}
+            {/* Color selector with swatches */}
             {colors.length > 0 && (
               <div>
-                <p className="text-xs text-[#8A9283] mb-1.5">Color:</p>
-                <div className="flex flex-wrap gap-1.5">
+                <p className="text-xs text-[#8A9283] mb-1.5">
+                  Color: <span className="text-[#2C2C2C] font-medium">{selectedColor}</span>
+                </p>
+                <div className="flex flex-wrap gap-2">
                   {colors.map((color) => (
                     <button
                       key={color}
                       onClick={() => setSelectedColor(color)}
-                      className={`px-3 py-1 text-xs rounded-full border transition-all ${
+                      className={`w-7 h-7 rounded-full border-2 transition-all duration-200 ${
                         selectedColor === color
-                          ? "bg-[#4A6B6D] text-white border-[#4A6B6D]"
-                          : "border-[#D4CFC2] text-[#5A5A4A] hover:border-[#4A6B6D]"
+                          ? "border-[#4A6B6D] scale-110 shadow-md"
+                          : "border-[#D4CFC2] hover:scale-110"
                       }`}
-                    >
-                      {color}
-                    </button>
+                      style={{ backgroundColor: getHexColor(color) }}
+                      title={color}
+                      aria-label={`Select ${color} color`}
+                    />
                   ))}
                 </div>
               </div>
@@ -162,16 +191,18 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
             {/* Size selector */}
             {sizes.length > 0 && (
               <div>
-                <p className="text-xs text-[#8A9283] mb-1.5">Size:</p>
+                <p className="text-xs text-[#8A9283] mb-1.5">
+                  Size: <span className="text-[#2C2C2C] font-medium">{selectedSize}</span>
+                </p>
                 <div className="flex flex-wrap gap-1.5">
                   {sizes.map((size) => (
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
-                      className={`w-8 h-8 flex items-center justify-center text-xs rounded-full border transition-all font-medium ${
+                      className={`w-9 h-9 flex items-center justify-center text-xs rounded-lg border-2 transition-all duration-200 font-medium ${
                         selectedSize === size
-                          ? "bg-[#4A6B6D] text-white border-[#4A6B6D]"
-                          : "border-[#D4CFC2] text-[#5A5A4A] hover:border-[#4A6B6D]"
+                          ? "bg-[#4A6B6D] text-white border-[#4A6B6D] shadow-sm"
+                          : "border-[#D4CFC2] text-[#5A5A4A] hover:border-[#4A6B6D] hover:text-[#4A6B6D]"
                       }`}
                     >
                       {size}
@@ -191,12 +222,14 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
             isSoldOut
               ? "bg-gray-200 text-gray-400 cursor-not-allowed"
               : added
-                ? "bg-green-600 text-white"
-                : "bg-[#4A6B6D] text-white hover:bg-[#3A5557] active:scale-[0.98]"
+                ? "bg-emerald-600 text-white shadow-sm"
+                : "bg-[#4A6B6D] text-white hover:bg-[#3A5557] active:scale-[0.97] shadow-sm hover:shadow-md"
           }`}
         >
           {isSoldOut ? (
             "Sold Out"
+          ) : adding ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : added ? (
             <>
               <Check className="h-4 w-4" /> Added

@@ -35,37 +35,64 @@ export default async function HomePage() {
   return (
     <div className="flex-1">
       {/* Hero Section */}
-      <section className="relative bg-[#4A6B6D] text-white overflow-hidden">
+      <section className="relative bg-[#4A6B6D] text-white overflow-hidden min-h-[70vh] flex items-center">
+        {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#3A5557] via-[#4A6B6D] to-[#5A7B7D]" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
+
+        {/* Decorative circles */}
+        <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-white/[0.03]" />
+        <div className="absolute -bottom-48 -left-48 w-[32rem] h-[32rem] rounded-full bg-white/[0.02]" />
+        <div className="absolute top-1/4 right-1/3 w-64 h-64 rounded-full bg-[#A6822E]/10 blur-3xl" />
+
+        {/* Subtle geometric pattern */}
+        <div className="absolute inset-0 opacity-[0.03]">
+          <div
+            className="w-full h-full"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle at 25% 25%, white 1px, transparent 1px), radial-gradient(circle at 75% 75%, white 1px, transparent 1px)",
+              backgroundSize: "60px 60px",
+            }}
+          />
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 w-full">
           <div className="max-w-2xl">
-            <p className="inline-flex items-center px-3 py-1 rounded-full bg-white/15 text-sm text-[#D4CFC2] mb-4">
+            <p className="inline-flex items-center px-3 py-1 rounded-full bg-white/15 text-sm text-[#D4CFC2] mb-4 backdrop-blur-sm">
+              <span className="w-2 h-2 rounded-full bg-[#A6822E] mr-2 animate-pulse-soft" />
               New Collection
             </p>
             <h1
-              className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-4"
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-4 animate-fade-in"
               style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
             >
               Streetwear That
               <br />
               <span className="text-[#C4A85D]">Defines You</span>
             </h1>
-            <p className="text-lg text-[#D4CFC2] mb-8 max-w-lg">
+            <p
+              className="text-lg text-[#D4CFC2] mb-8 max-w-lg animate-fade-in"
+              style={{ animationDelay: "0.15s" }}
+            >
               Premium caps, tees, and hats for those who dare to stand out. Bold designs,
               quality craftsmanship.
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div
+              className="flex flex-wrap gap-3 animate-fade-in"
+              style={{ animationDelay: "0.3s" }}
+            >
               <a
                 href="#products"
-                className="inline-flex items-center px-6 py-3 rounded-full bg-[#A6822E] text-white font-medium hover:bg-[#8E6E1F] transition-all"
+                className="group inline-flex items-center px-6 py-3 rounded-full bg-[#A6822E] text-white font-medium hover:bg-[#8E6E1F] transition-all shadow-lg hover:shadow-xl active:scale-[0.97]"
               >
-                Shop Now
+                <span>Shop Now</span>
+                <span className="inline-block ml-2 transition-transform group-hover:translate-x-1">→</span>
               </a>
               <a
-                href="#products"
-                className="inline-flex items-center px-6 py-3 rounded-full border border-white/30 text-white font-medium hover:bg-white/10 transition-all"
+                href="/auth/signup"
+                className="inline-flex items-center px-6 py-3 rounded-full border border-white/30 text-white font-medium hover:bg-white/10 transition-all backdrop-blur-sm"
               >
-                View Collection
+                Join YBD
               </a>
             </div>
           </div>

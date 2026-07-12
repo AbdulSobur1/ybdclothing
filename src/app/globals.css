@@ -69,3 +69,93 @@ h1, h2, h3, h4 {
   background: #4A6B6D;
   color: #F2EDE1;
 }
+
+/* ─────────── Animations ─────────── */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.3s ease-out;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #E8E2D4 25%, #F2EDE1 50%, #E8E2D4 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* Loading skeleton */
+.skeleton {
+  @apply animate-shimmer rounded-lg;
+}
+
+/* Utility: smooth entrance for page content */
+.page-enter {
+  animation: fade-in 0.4s ease-out forwards;
+}
+
+/* Scroll-margin for anchor links with sticky nav */
+#products {
+  scroll-margin-top: 80px;
+}

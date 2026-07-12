@@ -155,32 +155,56 @@ export default function CheckoutPage() {
   if (orderResult) {
     return (
       <div className="flex-1 bg-[#F2EDE1] py-20 px-4">
-        <div className="max-w-lg mx-auto text-center">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-100 flex items-center justify-center">
-            <Check className="h-10 w-10 text-green-600" />
+        <div className="max-w-lg mx-auto text-center page-enter">
+          {/* Animated checkmark */}
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-emerald-100 flex items-center justify-center">
+            <Check className="h-10 w-10 text-emerald-600 animate-bounce-in" />
           </div>
           <h1
             className="text-3xl font-bold text-[#2C2C2C] mb-3"
             style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
           >
-            Order Placed!
+            Order Placed! 🎉
           </h1>
           <p className="text-[#8A9283] mb-2">
             Your order <strong className="text-[#4A6B6D]">#{orderResult.orderId}</strong> has been placed successfully.
           </p>
-          <p className="text-[#8A9283] mb-8">
-            We&apos;ll send you an email once your order is confirmed.
+          <p className="text-[#8A9283] mb-6">
+            Please complete your bank transfer and upload the receipt to
+            speed up verification.
           </p>
+
+          {/* Bank details reminder */}
+          <div className="bg-white rounded-xl p-4 border border-[#E0D8C8] mb-6 text-left">
+            <p className="text-xs font-semibold text-[#5A5A4A] uppercase tracking-wider mb-2">
+              Payment Details
+            </p>
+            <div className="space-y-1 text-sm">
+              <p className="text-[#5A5A4A]">
+                Bank: <span className="font-medium text-[#2C2C2C]">{config.bank.name}</span>
+              </p>
+              <p className="text-[#5A5A4A]">
+                Account: <span className="font-medium text-[#2C2C2C]">{config.bank.accountName}</span>
+              </p>
+              <p className="text-[#5A5A4A]">
+                Number: <span className="font-bold text-lg text-[#4A6B6D]">{config.bank.accountNumber}</span>
+              </p>
+              <p className="text-[#5A5A4A]">
+                Amount: <span className="font-bold text-[#A6822E]">{formatPrice(total)}</span>
+              </p>
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href={`/orders/${orderResult.orderId}`}
-              className="inline-flex items-center px-6 py-2.5 rounded-full bg-[#4A6B6D] text-white font-medium hover:bg-[#3A5557] transition-all"
+              className="inline-flex items-center px-6 py-2.5 rounded-full bg-[#4A6B6D] text-white font-medium hover:bg-[#3A5557] transition-all active:scale-[0.97]"
             >
               View Order
             </Link>
             <Link
               href="/"
-              className="inline-flex items-center px-6 py-2.5 rounded-full border border-[#4A6B6D] text-[#4A6B6D] font-medium hover:bg-[#4A6B6D] hover:text-white transition-all"
+              className="inline-flex items-center px-6 py-2.5 rounded-full border border-[#4A6B6D] text-[#4A6B6D] font-medium hover:bg-[#4A6B6D] hover:text-white transition-all active:scale-[0.97]"
             >
               Continue Shopping
             </Link>
@@ -222,10 +246,43 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="flex-1 bg-[#F2EDE1]">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="flex-1 bg-[#F2EDE1]">          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 page-enter">
+        {/* Progress steps */}
+        <div className="flex items-center justify-center gap-2 mb-8">
+          {[
+            { label: "Cart", icon: "🛒" },
+            { label: "Details", icon: "📋" },
+            { label: "Payment", icon: "💳" },
+            { label: "Confirm", icon: "✓" },
+          ].map((step, i) => (
+            <div key={step.label} className="flex items-center">
+              <div className="flex flex-col items-center">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                    i <= 2
+                      ? "bg-[#4A6B6D] text-white shadow-sm"
+                      : "bg-gray-200 text-gray-400"
+                  }`}
+                >
+                  {i + 1}
+                </div>
+                <span className="text-[10px] text-[#8A9283] mt-1 hidden sm:block">
+                  {step.label}
+                </span>
+              </div>
+              {i < 3 && (
+                <div
+                  className={`w-8 sm:w-12 h-0.5 mx-1 mt-[-1.25rem] ${
+                    i <= 1 ? "bg-[#4A6B6D]" : "bg-gray-200"
+                  }`}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+
         <h1
-          className="text-3xl font-bold text-[#2C2C2C] mb-8"
+          className="text-3xl font-bold text-[#2C2C2C] mb-8 text-center sm:text-left"
           style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
         >
           Checkout
