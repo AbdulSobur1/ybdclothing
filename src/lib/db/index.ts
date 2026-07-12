@@ -8,7 +8,12 @@ const connectionString = process.env.DATABASE_URL!;
 // We reuse the connection across hot-reloads in dev.
 const globalForDb = globalThis as unknown as { client: postgres.Sql | undefined };
 
-const client = globalForDb.client ?? postgres(connectionString, { prepare: false });
+// Supabase pooler requires SSL. Passing explicitly to postgres.js
+// because ?sslmode=require in the connection string is not reliably parsed.
+const client = globalForDb.client ?? postgres(connectionString, {
+  prepare: false,
+  ssl: "require",
+});
 
 if (process.env.NODE_ENV !== "production") {
   globalForDb.client = client;
