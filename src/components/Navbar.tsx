@@ -4,23 +4,31 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { User as SupabaseUser } from "@supabase/supabase-js";
+import type { AuthChangeEvent, Session, User as SupabaseUser } from "@supabase/supabase-js";
 import { ShoppingBag, Menu, X, User, LogOut, Package } from "lucide-react";
 
 export function Navbar() {
   const pathname = usePathname();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const supabase = createClient();
+
+  // Lazily create the Supabase client — only on the client after mount,
+  // never during SSR/static generation. This prevents Vercel build errors.
+  const [supabase, setSupabase] = useState<ReturnType<typeof createClient>>(null);
+  useEffect(() => {
+    setSupabase(createClient());
+  }, []);
 
   useEffect(() => {
+    if (!supabase) return;
+
     const getUser = async () => {
       const { data } = await supabase.auth.getUser();
       setUser(data.user ?? null);
     };
     getUser();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       setUser(session?.user ?? null);
     });
 
@@ -28,7 +36,9 @@ export function Navbar() {
   }, [supabase]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     setMobileOpen(false);
   };
 
