@@ -235,7 +235,7 @@ function CheckoutContent() {
               View Order
             </Link>
             <Link
-              href="/"
+              href="/shop"
               className="inline-flex items-center px-6 py-2.5 rounded-full border border-[#4A6B6D] text-[#4A6B6D] font-medium hover:bg-[#4A6B6D] hover:text-white transition-all active:scale-[0.97]"
             >
               Continue Shopping
@@ -263,7 +263,7 @@ function CheckoutContent() {
             Your Cart is Empty
           </h1>
           <Link
-            href="/"
+            href="/shop"
             className="inline-flex items-center px-6 py-2.5 rounded-full bg-[#4A6B6D] text-white font-medium hover:bg-[#3A5557] transition-all"
           >
             Shop Now
@@ -275,6 +275,17 @@ function CheckoutContent() {
 
   return (
     <div className="flex-1 bg-[#F2EDE1]">          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 page-enter">
+        {/* Back link */}
+        <a
+          href="/shop"
+          className="inline-flex items-center gap-1 text-sm text-[#8A9283] hover:text-[#4A6B6D] mb-6 transition-colors"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Continue Shopping
+        </a>
+
         {/* Progress steps */}
         <div className="flex items-center justify-center gap-2 mb-8">
           {[
