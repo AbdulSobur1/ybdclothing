@@ -16,6 +16,7 @@ import {
   BarChart3,
   TrendingDown,
 } from "lucide-react";
+import { SkeletonStatsGrid, SkeletonTable, SkeletonLine } from "@/components/Skeleton";
 
 interface DashboardData {
   totalOrders: number;
@@ -81,8 +82,42 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 text-[#A6822E] animate-spin" />
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <SkeletonLine className="h-7 w-40 bg-white/10" />
+          <SkeletonLine className="h-9 w-24 bg-white/10" />
+        </div>
+        <SkeletonStatsGrid />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-[#16213e] rounded-xl p-5 border border-white/5">
+            <SkeletonLine className="h-4 w-40 bg-white/10 mb-4" />
+            <SkeletonLine className="h-32 bg-white/10 rounded" />
+          </div>
+          <div className="bg-[#16213e] rounded-xl p-5 border border-white/5">
+            <SkeletonLine className="h-4 w-32 bg-white/10 mb-4" />
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonLine key={i} className="h-9 w-full bg-white/10 mb-2 rounded" />
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SkeletonTable rows={4} />
+          <div className="bg-[#16213e] rounded-xl border border-white/5">
+            <div className="p-5 border-b border-white/5">
+              <SkeletonLine className="h-4 w-24 bg-white/10" />
+            </div>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="p-4 flex items-center gap-3">
+                <SkeletonLine className="h-10 w-10 rounded-lg bg-white/10" />
+                <div className="flex-1">
+                  <SkeletonLine className="h-4 w-32 bg-white/10 mb-1" />
+                  <SkeletonLine className="h-3 w-16 bg-white/10" />
+                </div>
+                <SkeletonLine className="h-4 w-16 bg-white/10" />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

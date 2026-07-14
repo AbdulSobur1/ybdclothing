@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { User, Mail, Phone, MapPin, Lock, Save, Loader2, Package } from "lucide-react";
 import Link from "next/link";
+import { SkeletonProfile } from "@/components/Skeleton";
 
 interface Profile {
   full_name: string;
@@ -105,11 +106,7 @@ export default function ProfilePage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-[#F2EDE1]">
-        <Loader2 className="h-8 w-8 text-[#4A6B6D] animate-spin" />
-      </div>
-    );
+    return <SkeletonProfile />;
   }
 
   // Generate initials for avatar

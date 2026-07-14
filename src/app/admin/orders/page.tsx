@@ -5,6 +5,7 @@ import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
 import { OrderStatusBadge } from "@/components/OrderStatusBadge";
 import { Search, ShoppingBag, Loader2, ChevronRight, Download } from "lucide-react";
+import { SkeletonLine, SkeletonTable } from "@/components/Skeleton";
 
 interface Order {
   id: number;
@@ -129,8 +130,13 @@ export default function AdminOrdersPage() {
 
       {/* Orders table */}
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 text-[#A6822E] animate-spin" />
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <SkeletonLine key={i} className="h-8 w-24 rounded-lg bg-white/10" />
+            ))}
+          </div>
+          <SkeletonTable rows={6} />
         </div>
       ) : orders.length === 0 ? (
         <div className="text-center py-20">

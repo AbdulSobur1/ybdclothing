@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
-import { Package, Plus, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Package, Plus, Loader2, Pencil, Trash2, ImageIcon } from "lucide-react";
+import { ProductImageUploader } from "@/components/ProductImageUploader";
+import { SkeletonProductGrid, SkeletonLine } from "@/components/Skeleton";
 
 interface Variant {
   id: number;
@@ -169,8 +171,12 @@ export default function AdminProductsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 text-[#A6822E] animate-spin" />
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <SkeletonLine className="h-7 w-32 bg-white/10" />
+          <SkeletonLine className="h-9 w-32 rounded-lg bg-white/10" />
+        </div>
+        <SkeletonProductGrid count={6} />
       </div>
     );
   }
@@ -247,13 +253,10 @@ export default function AdminProductsPage() {
                   className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#A6822E] transition-all resize-none"
                 />
               </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Image URL</label>
-                <input
-                  type="text"
-                  value={form.imageUrl}
-                  onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#A6822E] transition-all"
+              <div className="mb-4">
+                <ProductImageUploader
+                  currentUrl={form.imageUrl || null}
+                  onImageUploaded={(url) => setForm((f) => ({ ...f, imageUrl: url ?? "" }))}
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -342,8 +345,17 @@ export default function AdminProductsPage() {
           {products.map((product) => (
             <div key={product.id} className="bg-[#16213e] rounded-xl border border-white/5 p-5 hover:border-white/10 transition-all">
               <div className="flex items-start justify-between mb-3">
-                <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
-                  <Package className="h-5 w-5 text-gray-400" />
+                {/* Product thumbnail */}
+                <div className="w-14 h-14 rounded-lg bg-white/5 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                  {product.imageUrl ? (
+                    <img
+                      src={product.imageUrl}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <ImageIcon className="h-5 w-5 text-gray-400" />
+                  )}
                 </div>
                 <div className="flex gap-1">
                   <button

@@ -9,6 +9,7 @@ import { config } from "@/lib/config";
 import { Trash2, Minus, Plus, Truck, Store, Upload, Check, Banknote, Loader2, ImageIcon } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { SkeletonCheckout } from "@/components/Skeleton";
 
 interface CartItem {
   id: number;
@@ -245,11 +246,7 @@ function CheckoutContent() {
 
   // ── Loading ──
   if (loading) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-[#F2EDE1]">
-        <Loader2 className="h-8 w-8 text-[#4A6B6D] animate-spin" />
-      </div>
-    );
+    return <SkeletonCheckout />;
   }
 
   // ── Empty Cart Guard ──
