@@ -7,7 +7,7 @@ import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
 import { config } from "@/lib/config";
 import { OrderStatusBadge, OrderStatusTimeline } from "@/components/OrderStatusBadge";
-import { ArrowLeft, Package, MapPin, Receipt, Banknote } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Receipt, Banknote, MessageCircle } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
 
 interface OrderDetailPageProps {
@@ -178,7 +178,20 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
           )}
         </div>
 
-        <p className="text-xs text-[#B8B2A3] text-center">
+        {/* Contact Support */}
+        <div className="text-center mt-8">
+          <a
+            href={`https://wa.me/${config.whatsappNumber}?text=Hi%20YBD%20Clothing%2C%20I%20have%20a%20question%20about%20order%20%23${order.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#25D366] text-white text-sm font-medium hover:bg-[#20BD5A] transition-all shadow-sm hover:shadow-md active:scale-[0.97]"
+          >
+            <MessageCircle className="h-4 w-4" />
+            Chat about this order on WhatsApp
+          </a>
+        </div>
+
+        <p className="text-xs text-[#B8B2A3] text-center mt-6">
           Order placed on {new Date(order.createdAt).toLocaleDateString("en-NG", {
             year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit",
           })}

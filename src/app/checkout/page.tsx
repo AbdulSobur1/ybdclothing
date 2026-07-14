@@ -6,7 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/utils";
 import { config } from "@/lib/config";
-import { Trash2, Minus, Plus, Truck, Store, Upload, Check, Banknote, Loader2 } from "lucide-react";
+import { Trash2, Minus, Plus, Truck, Store, Upload, Check, Banknote, Loader2, ImageIcon } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
 
 interface CartItem {
@@ -300,6 +300,18 @@ export default function CheckoutPage() {
               <div className="space-y-4">
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex items-center gap-4 pb-4 border-b border-[#E0D8C8]/50 last:border-0">
+                    {/* Thumbnail */}
+                    <div className="w-14 h-14 rounded-lg bg-[#E8E2D4] flex-shrink-0 overflow-hidden flex items-center justify-center">
+                      {item.product.imageUrl ? (
+                        <img
+                          src={item.product.imageUrl}
+                          alt={item.product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <ImageIcon className="h-5 w-5 text-[#B8B2A3]" />
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-[#2C2C2C] truncate">{item.product.name}</p>
                       {item.variant && (

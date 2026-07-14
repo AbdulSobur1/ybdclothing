@@ -111,6 +111,15 @@ function LoginForm() {
                 </>
               )}
             </button>
+
+            <div className="text-center mt-3">
+              <Link
+                href="/auth/reset-password"
+                className="text-sm text-[#8A9283] hover:text-[#4A6B6D] transition-colors underline underline-offset-2"
+              >
+                Forgot Password?
+              </Link>
+            </div>
           </form>
 
           <p className="text-center text-sm text-[#8A9283] mt-6">
