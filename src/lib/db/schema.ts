@@ -48,7 +48,7 @@ export const products = pgTable("products", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
-  basePrice: integer("base_price").notNull(), // stored in kobo (NGN × 100) to avoid float issues
+  basePrice: integer("base_price").notNull(), // stored in Naira (integer to avoid float issues)
   category: varchar("category", { length: 50 }).notNull(), // "cap", "tee", "hat"
   hasVariants: boolean("has_variants").default(false).notNull(),
   imageUrl: text("image_url"),
@@ -98,7 +98,7 @@ export const cartItems = pgTable("cart_items", {
 export const deliveryZones = pgTable("delivery_zones", {
   id: serial("id").primaryKey(),
   zoneName: varchar("zone_name", { length: 255 }).notNull(),
-  fee: integer("fee").notNull(), // in kobo (NGN × 100)
+  fee: integer("fee").notNull(), // in Naira
   active: boolean("active").default(true).notNull(),
 });
 
@@ -116,10 +116,10 @@ export const orders = pgTable("orders", {
   deliveryZoneId: integer("delivery_zone_id").references(() => deliveryZones.id, {
     onDelete: "set null",
   }),
-  deliveryFee: integer("delivery_fee"), // snapshot at order time (kobo)
+  deliveryFee: integer("delivery_fee"), // snapshot at order time (Naira)
   deliveryAddress: text("delivery_address"), // snapshot at order time
-  subtotal: integer("subtotal").notNull(), // in kobo
-  total: integer("total").notNull(), // in kobo
+  subtotal: integer("subtotal").notNull(), // in Naira
+  total: integer("total").notNull(), // in Naira
   receiptUrl: text("receipt_url"), // Supabase Storage path
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -141,7 +141,7 @@ export const orderItems = pgTable("order_items", {
     onDelete: "set null",
   }),
   nameSnapshot: varchar("name_snapshot", { length: 255 }).notNull(),
-  priceSnapshot: integer("price_snapshot").notNull(), // in kobo
+  priceSnapshot: integer("price_snapshot").notNull(), // in Naira
   quantity: integer("quantity").notNull().default(1),
 });
 

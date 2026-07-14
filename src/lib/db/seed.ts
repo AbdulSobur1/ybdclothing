@@ -7,8 +7,8 @@
  * - Products with their variants
  * - Delivery zones (placeholder zones — owner will update)
  *
- * Prices are stored in kobo (NGN × 100) to avoid floating-point issues.
- * E.g. ₦18,000 → 1800000
+ * Prices are stored directly in Naira to avoid floating-point issues.
+ * E.g. ₦18,000 → 18000
  */
 
 import { db } from "./index";
@@ -36,7 +36,7 @@ async function seed() {
     .values({
       name: "YBD Baseball Cap",
       description: "Classic baseball cap with embroidered YBD logo. Premium cotton construction with adjustable strap for the perfect fit.",
-      basePrice: 1800000, // ₦18,000
+      basePrice: 18000, // ₦18,000
       category: "cap",
       hasVariants: true,
       imageUrl: null, // placeholder — owner will supply real photos
@@ -56,7 +56,7 @@ async function seed() {
     .values({
       name: "YBD Cadet Cap 1",
       description: "Stylish cadet cap with a modern twist. Features the iconic YBD branding on the front panel.",
-      basePrice: 1900000, // ₦19,000
+      basePrice: 19000, // ₦19,000
       category: "cap",
       hasVariants: false,
       imageUrl: null,
@@ -74,7 +74,7 @@ async function seed() {
     .values({
       name: "YBD Cadet Cap 2",
       description: "Alternative cadet cap design with a distinct color palette and detailing.",
-      basePrice: 1900000, // ₦19,000
+      basePrice: 19000, // ₦19,000
       category: "cap",
       hasVariants: false,
       imageUrl: null,
@@ -92,7 +92,7 @@ async function seed() {
     .values({
       name: "YBD Trucker Hat",
       description: "Classic trucker hat with mesh back and foam front. Lightweight and breathable for everyday wear.",
-      basePrice: 1000000, // ₦10,000
+      basePrice: 10000, // ₦10,000
       category: "hat",
       hasVariants: false,
       imageUrl: null,
@@ -110,7 +110,7 @@ async function seed() {
     .values({
       name: "YBD Outta Space Tee",
       description: "Bold 'Outta Space' graphic tee. Premium 100% cotton with a relaxed fit. Available in multiple colors and sizes.",
-      basePrice: 2500000, // ₦25,000
+      basePrice: 25000, // ₦25,000
       category: "tee",
       hasVariants: true,
       imageUrl: null,
@@ -138,7 +138,7 @@ async function seed() {
     .values({
       name: "YBD Risk Takers Tee",
       description: "'Risk Takers' graphic tee for those who dare. Premium cotton with a bold print that makes a statement.",
-      basePrice: 2500000, // ₦25,000
+      basePrice: 25000, // ₦25,000
       category: "tee",
       hasVariants: true,
       imageUrl: null,
@@ -162,9 +162,9 @@ async function seed() {
   console.log("\nSeeding delivery zones...");
 
   await db.insert(deliveryZones).values([
-    { zoneName: "Lagos Mainland", fee: 200000, active: true },     // ₦2,000
-    { zoneName: "Lagos Island", fee: 300000, active: true },       // ₦3,000
-    { zoneName: "Other States", fee: 500000, active: true },       // ₦5,000
+    { zoneName: "Lagos Mainland", fee: 2000, active: true },     // ₦2,000
+    { zoneName: "Lagos Island", fee: 3000, active: true },       // ₦3,000
+    { zoneName: "Other States", fee: 5000, active: true },       // ₦5,000
   ]);
   console.log(`  ✓ Lagos Mainland — ₦2,000`);
   console.log(`  ✓ Lagos Island — ₦3,000`);

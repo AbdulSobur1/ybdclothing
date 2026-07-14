@@ -72,9 +72,15 @@ export function Footer() {
           <p className="text-xs text-[#8A9283]">
             &copy; {currentYear} YBD Clothing. All rights reserved.
           </p>
-          <p className="text-xs text-[#8A9283]">
-            Made in Nigeria 🇳🇬
-          </p>
+          <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
+            <p className="text-xs text-[#8A9283]">
+              Coded by Larry &amp; programmed by Sobur
+            </p>
+            <span className="hidden sm:inline text-[#3D5253]">|</span>
+            <p className="text-xs text-[#8A9283]">
+              Made in Nigeria 🇳🇬
+            </p>
+          </div>
         </div>
       </div>
     </footer>

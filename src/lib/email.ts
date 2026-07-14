@@ -13,7 +13,7 @@ export async function sendNewOrderNotification(params: {
   orderId: number;
   customerName: string;
   customerEmail: string;
-  total: number; // in kobo
+  total: number; // in Naira
   adminUrl: string;
 }) {
   const { orderId, customerName, customerEmail, total, adminUrl } = params;
@@ -33,7 +33,7 @@ export async function sendNewOrderNotification(params: {
                 <tr><td style="padding: 8px 0; color: #666;">Order</td><td style="font-weight: 600;">#${orderId}</td></tr>
                 <tr><td style="padding: 8px 0; color: #666;">Customer</td><td>${customerName}</td></tr>
                 <tr><td style="padding: 8px 0; color: #666;">Email</td><td>${customerEmail}</td></tr>
-                <tr><td style="padding: 8px 0; color: #666;">Total</td><td style="font-weight: 600;">₦${(total / 100).toLocaleString()}</td></tr>
+                <tr><td style="padding: 8px 0; color: #666;">Total</td><td style="font-weight: 600;">₦${total.toLocaleString()}</td></tr>
               </table>
               <p style="margin-top: 24px;">
                 <a href="${adminUrl}" style="display: inline-block; padding: 12px 24px; background: #4A6B6D; color: #fff; text-decoration: none; border-radius: 999px;">View Order</a>
@@ -43,7 +43,7 @@ export async function sendNewOrderNotification(params: {
           </body>
         </html>
       `,
-      text: `New Order #${orderId}\n\nCustomer: ${customerName} (${customerEmail})\nTotal: ₦${(total / 100).toLocaleString()}\n\nView at: ${adminUrl}`,
+      text: `New Order #${orderId}\n\nCustomer: ${customerName} (${customerEmail})\nTotal: ₦${total.toLocaleString()}\n\nView at: ${adminUrl}`,
     });
   } catch (error) {
     console.error("Failed to send new-order email:", error);

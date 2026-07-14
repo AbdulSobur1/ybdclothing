@@ -1,16 +1,9 @@
 /**
- * Format a price stored in kobo (NGN × 100) to a display string.
- * E.g. 18000 → "₦18,000"
+ * Format a price to a display string.
+ * Price is stored directly in Naira (e.g. 18000 → "₦18,000").
  */
-export function formatPrice(kobo: number): string {
-  return `₦${(kobo / 100).toLocaleString()}`;
-}
-
-/**
- * Convert a Naira amount string (e.g. "18000") to kobo.
- */
-export function nairaToKobo(naira: number): number {
-  return Math.round(naira * 100);
+export function formatPrice(amount: number): string {
+  return `₦${amount.toLocaleString()}`;
 }
 
 /**

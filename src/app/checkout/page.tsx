@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/utils";
 import { config } from "@/lib/config";
 import { Trash2, Minus, Plus, Truck, Store, Upload, Check, Banknote, Loader2 } from "lucide-react";
+import { CopyButton } from "@/components/CopyButton";
 
 interface CartItem {
   id: number;
@@ -186,9 +187,11 @@ export default function CheckoutPage() {
               <p className="text-[#5A5A4A]">
                 Account: <span className="font-medium text-[#2C2C2C]">{config.bank.accountName}</span>
               </p>
-              <p className="text-[#5A5A4A]">
-                Number: <span className="font-bold text-lg text-[#4A6B6D]">{config.bank.accountNumber}</span>
-              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-[#5A5A4A]">Number:</span>
+                <span className="font-bold text-lg text-[#4A6B6D]">{config.bank.accountNumber}</span>
+                <CopyButton text={config.bank.accountNumber} label="Copy" />
+              </div>
               <p className="text-[#5A5A4A]">
                 Amount: <span className="font-bold text-[#A6822E]">{formatPrice(total)}</span>
               </p>
@@ -416,12 +419,13 @@ export default function CheckoutPage() {
                     <span className="text-[#8A9283]">Account Name:</span>{" "}
                     <span className="font-medium">{config.bank.accountName}</span>
                   </p>
-                  <p>
-                    <span className="text-[#8A9283]">Account Number:</span>{" "}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#8A9283]">Account Number:</span>
                     <span className="font-medium text-lg text-[#4A6B6D]">
                       {config.bank.accountNumber}
                     </span>
-                  </p>
+                    <CopyButton text={config.bank.accountNumber} label="Copy" />
+                  </div>
                 </div>
               </div>
 

@@ -153,7 +153,7 @@ export default function AdminDeliveryZonesPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-400 mb-1">Delivery Fee (kobo) *</label>
+                <label className="block text-xs text-gray-400 mb-1">Delivery Fee (₦) *</label>
                 <input
                   type="number"
                   value={fee}
@@ -162,7 +162,7 @@ export default function AdminDeliveryZonesPage() {
                   className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#A6822E] transition-all"
                   placeholder={String(15000)}
                 />
-                <p className="text-xs text-gray-500 mt-1">Example: 15000 = ₦150</p>
+                <p className="text-xs text-gray-500 mt-1">Example: 1500 = ₦1,500</p>
               </div>
               <div className="flex gap-3 pt-2">
                 <button

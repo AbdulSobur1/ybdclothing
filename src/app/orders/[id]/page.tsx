@@ -8,6 +8,7 @@ import { formatPrice } from "@/lib/utils";
 import { config } from "@/lib/config";
 import { OrderStatusBadge, OrderStatusTimeline } from "@/components/OrderStatusBadge";
 import { ArrowLeft, Package, MapPin, Receipt, Banknote } from "lucide-react";
+import { CopyButton } from "@/components/CopyButton";
 
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>;
@@ -160,7 +161,11 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
             <div className="space-y-1 text-sm">
               <p><span className="text-[#8A9283]">Bank:</span> {config.bank.name}</p>
               <p><span className="text-[#8A9283]">Name:</span> {config.bank.accountName}</p>
-              <p><span className="text-[#8A9283]">Account:</span> <strong className="text-[#4A6B6D]">{config.bank.accountNumber}</strong></p>
+              <div className="flex items-center gap-2">
+                <span className="text-[#8A9283]">Account:</span>
+                <strong className="text-[#4A6B6D]">{config.bank.accountNumber}</strong>
+                <CopyButton text={config.bank.accountNumber} label="Copy" />
+              </div>
             </div>
           </div>
           {order.receiptUrl ? (

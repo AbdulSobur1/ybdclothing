@@ -11,7 +11,7 @@ export interface Product {
   id: number;
   name: string;
   description: string | null;
-  basePrice: number; // in kobo
+  basePrice: number; // in Naira
   category: string;
   hasVariants: boolean;
   imageUrl: string | null;

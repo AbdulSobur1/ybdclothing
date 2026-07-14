@@ -216,7 +216,7 @@ export default function AdminProductsPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Price (kobo) *</label>
+                  <label className="block text-xs text-gray-400 mb-1">Price (₦) *</label>
                   <input
                     type="number"
                     value={form.basePrice}
