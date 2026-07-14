@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
-import { orders, profiles } from "@/lib/db/schema";
-import { config } from "@/lib/config";
+import { orders } from "@/lib/db/schema";
 import { sendOrderStatusUpdate } from "@/lib/email";
 import { eq } from "drizzle-orm";
+import { checkAdmin } from "@/lib/admin";
 
 /**
  * POST /api/admin/update-order-status
@@ -20,14 +20,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  // Admin check via Drizzle (avoids Supabase client type issues)
-  const [profile] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.id, user.id))
-    .limit(1);
-
-  if (!profile || profile.email !== config.ownerEmail) {
+  if (!await checkAdmin(user.id)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -51,13 +44,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  // Update order status
   await db
     .update(orders)
     .set({ status: newStatus, updatedAt: new Date() })
     .where(eq(orders.id, orderId));
 
-  // Send email notification to customer for all status changes
   if (customerEmail) {
     sendOrderStatusUpdate({
       orderId,

@@ -1,18 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
-import { products, productVariants, profiles } from "@/lib/db/schema";
-import { config } from "@/lib/config";
-import { eq, desc, sql } from "drizzle-orm";
-
-async function checkAdmin(userId: string) {
-  const [profile] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.id, userId))
-    .limit(1);
-  return profile?.email === config.ownerEmail;
-}
+import { products, productVariants } from "@/lib/db/schema";
+import { eq, desc } from "drizzle-orm";
+import { checkAdmin } from "@/lib/admin";
 
 /**
  * GET /api/admin/products — List all products with variant info.
@@ -119,9 +110,7 @@ export async function PUT(request: Request) {
     })
     .where(eq(products.id, id));
 
-  // Update variants if provided
   if (variants) {
-    // Delete existing variants and re-insert
     await db.delete(productVariants).where(eq(productVariants.productId, id));
     if (variants.length > 0) {
       await db.insert(productVariants).values(

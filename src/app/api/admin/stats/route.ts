@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
-import { orders, orderItems, products, profiles, deliveryZones } from "@/lib/db/schema";
-import { config } from "@/lib/config";
-import { eq, sql, and, desc } from "drizzle-orm";
+import { orders, products, profiles, deliveryZones } from "@/lib/db/schema";
+import { eq, sql, desc } from "drizzle-orm";
+import { checkAdmin } from "@/lib/admin";
 
 /**
  * GET /api/admin/stats — Returns dashboard overview stats (admin only).
@@ -16,22 +16,14 @@ export async function GET() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const [profile] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.id, user.id))
-    .limit(1);
-
-  if (!profile || profile.email !== config.ownerEmail) {
+  if (!await checkAdmin(user.id)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  // Total orders
   const [totalOrdersResult] = await db
     .select({ count: sql<number>`count(*)` })
     .from(orders);
 
-  // Orders by status
   const ordersByStatus = await db
     .select({
       status: orders.status,
@@ -40,40 +32,32 @@ export async function GET() {
     .from(orders)
     .groupBy(orders.status);
 
-  // Total revenue (sum of all completed/confirmed order totals)
   const [revenueResult] = await db
     .select({
       total: sql<number>`coalesce(sum(${orders.total}), 0)`,
     })
     .from(orders)
-    .where(
-      sql`${orders.status} IN ('confirmed', 'completed', 'shipped')`,
-    );
+    .where(sql`${orders.status} IN ('confirmed', 'completed', 'shipped')`);
 
-  // Total products
   const [totalProductsResult] = await db
     .select({ count: sql<number>`count(*)` })
     .from(products)
     .where(eq(products.active, true));
 
-  // Total customers (unique users who placed orders)
   const [customersResult] = await db
     .select({ count: sql<number>`count(distinct ${orders.userId})` })
     .from(orders);
 
-  // Total profiles (registered users)
   const [profilesResult] = await db
     .select({ count: sql<number>`count(*)` })
     .from(profiles);
 
-  // Recent orders (last 10)
   const recentOrders = await db
     .select()
     .from(orders)
     .orderBy(desc(orders.createdAt))
     .limit(10);
 
-  // Recent products (last 6)
   const recentProducts = await db
     .select()
     .from(products)
@@ -81,7 +65,6 @@ export async function GET() {
     .orderBy(desc(products.createdAt))
     .limit(6);
 
-  // Orders by month (last 6 months for the chart)
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
   const ordersByMonth = await db
@@ -96,7 +79,6 @@ export async function GET() {
     .groupBy(sql`to_char(${orders.createdAt}, 'Mon')`, sql`to_char(${orders.createdAt}, 'YYYY')`)
     .orderBy(sql`min(${orders.createdAt})`);
 
-  // Recent orders with customer names
   const recentOrdersWithCustomers = await Promise.all(
     recentOrders.map(async (order) => {
       const [customer] = await db

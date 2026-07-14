@@ -1,18 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
-import { deliveryZones, profiles } from "@/lib/db/schema";
-import { config } from "@/lib/config";
+import { deliveryZones } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-
-async function checkAdmin(userId: string) {
-  const [profile] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.id, userId))
-    .limit(1);
-  return profile?.email === config.ownerEmail;
-}
+import { checkAdmin } from "@/lib/admin";
 
 /**
  * GET /api/admin/delivery-zones — List all delivery zones.

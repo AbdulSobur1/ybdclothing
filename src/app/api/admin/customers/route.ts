@@ -2,17 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { profiles, orders } from "@/lib/db/schema";
-import { config } from "@/lib/config";
 import { eq, sql, desc } from "drizzle-orm";
-
-async function checkAdmin(userId: string) {
-  const [profile] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.id, userId))
-    .limit(1);
-  return profile?.email === config.ownerEmail;
-}
+import { checkAdmin } from "@/lib/admin";
 
 /**
  * GET /api/admin/customers — List all customers with their order stats.

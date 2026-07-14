@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { db } from "@/lib/db";
-import { profiles } from "@/lib/db/schema";
 import { config } from "@/lib/config";
-import { eq } from "drizzle-orm";
+import { checkAdmin } from "@/lib/admin";
 
 /**
  * POST /api/admin/products/upload — Upload a product image to Supabase Storage.
@@ -18,14 +16,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  // Admin check
-  const [profile] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.id, user.id))
-    .limit(1);
-
-  if (!profile || profile.email !== config.ownerEmail) {
+  if (!await checkAdmin(user.id)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -36,7 +27,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
 
-  // Validate file type
   if (!config.storage.allowedFileTypes.includes(file.type)) {
     return NextResponse.json(
       {
@@ -46,7 +36,6 @@ export async function POST(request: Request) {
     );
   }
 
-  // Validate file size
   if (file.size > config.storage.maxFileSize) {
     return NextResponse.json(
       { error: `File too large. Maximum size: ${config.storage.maxFileSize / 1024 / 1024} MB` },
@@ -54,7 +43,6 @@ export async function POST(request: Request) {
     );
   }
 
-  // Upload to Supabase Storage
   const supabaseAdmin = createServiceClient();
   const fileExt = file.name.split(".").pop();
   const fileName = `products/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${fileExt}`;
@@ -71,7 +59,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Failed to upload image" }, { status: 500 });
   }
 
-  // Get the public URL
   const { data: publicUrlData } = supabaseAdmin.storage
     .from(config.storage.productImagesBucket)
     .getPublicUrl(fileName);

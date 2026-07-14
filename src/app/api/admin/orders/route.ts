@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { orders, orderItems, profiles, deliveryZones } from "@/lib/db/schema";
-import { config } from "@/lib/config";
 import { eq, and, desc, sql } from "drizzle-orm";
+import { checkAdmin } from "@/lib/admin";
 
 /**
  * GET /api/admin/orders — List all orders with optional filters.
@@ -17,13 +17,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const [profile] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.id, user.id))
-    .limit(1);
-
-  if (!profile || profile.email !== config.ownerEmail) {
+  if (!await checkAdmin(user.id)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -38,7 +32,6 @@ export async function GET(request: Request) {
   // Build conditions
   const conditions: ReturnType<typeof eq>[] = [];
   if (statusFilter && statusFilter !== "all") {
-    // Cast to any because the enum type from drizzle is strict
     conditions.push(eq(orders.status, statusFilter as any));
   }
 
@@ -46,16 +39,13 @@ export async function GET(request: Request) {
   let totalCount: number;
 
   if (search) {
-    // Search by order ID or customer name via subquery
     const searchNum = parseInt(search, 10);
     const isId = !isNaN(searchNum);
 
     const profileSubquery = db
       .select({ id: profiles.id })
       .from(profiles)
-      .where(
-        sql`${profiles.fullName} ILIKE ${`%${search}%`}`,
-      );
+      .where(sql`${profiles.fullName} ILIKE ${`%${search}%`}`);
 
     const searchConditions: (ReturnType<typeof eq> | import("drizzle-orm").SQL)[] = [];
     if (isId) {
@@ -96,7 +86,6 @@ export async function GET(request: Request) {
     totalCount = Number(countResult?.count ?? 0);
   }
 
-  // Attach customer info and delivery zone name
   const ordersWithDetails = await Promise.all(
     allOrders.map(async (order) => {
       const [customer] = await db
@@ -130,17 +119,16 @@ export async function GET(request: Request) {
   );
 
   if (isExport) {
-    // CSV export — return a downloadable CSV file with ALL matched orders
     const csvRows = [
       ["Order ID", "Customer", "Email", "Status", "Items", "Total (₦)", "Delivery", "Zone", "Date"].join(","),
       ...ordersWithDetails.map((o) =>
         [
           o.id,
-          `"${              o.customer?.fullName ?? "Unknown"}"`,
+          `"${o.customer?.fullName ?? "Unknown"}"`,
           `"${o.customer?.email ?? ""}"`,
           o.status,
           o.itemCount,
-          o.total / 100, // price in Naira
+          o.total / 100,
           o.deliveryMethod ?? "N/A",
           `"${o.zoneName ?? ""}"`,
           new Date(o.createdAt).toISOString().split("T")[0],

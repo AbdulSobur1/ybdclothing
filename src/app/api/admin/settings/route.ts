@@ -1,26 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
-import { profiles, storeSettings } from "@/lib/db/schema";
+import { storeSettings } from "@/lib/db/schema";
 import { config } from "@/lib/config";
 import { eq } from "drizzle-orm";
+import { checkAdmin } from "@/lib/admin";
 
-/**
- * HELPERS
- */
-
-async function checkAdmin(userId: string): Promise<boolean> {
-  const [profile] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.id, userId))
-    .limit(1);
-  return profile?.email === config.ownerEmail;
-}
-
-/**
- * Read a setting from the store_settings table, falling back to config defaults.
- */
 const SETTING_DEFAULTS: Record<string, string> = {
   bank_name: config.bank.name,
   bank_account_name: config.bank.accountName,
@@ -51,7 +36,6 @@ async function setSetting(key: string, value: string): Promise<void> {
 
 /**
  * HEAD /api/admin/settings — Check if current user is admin.
- * Returns x-owner-email header so client components can verify admin status.
  */
 export async function HEAD() {
   const supabase = await createClient();
@@ -74,7 +58,6 @@ export async function HEAD() {
 
 /**
  * GET /api/admin/settings — Get current store settings (admin only).
- * Reads from store_settings table, falling back to env vars / config defaults.
  */
 export async function GET() {
   const supabase = await createClient();
@@ -110,7 +93,6 @@ export async function GET() {
 
 /**
  * PUT /api/admin/settings — Update store settings (admin only).
- * Persists to the store_settings table in the database.
  */
 export async function PUT(request: Request) {
   const supabase = await createClient();
