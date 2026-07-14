@@ -6,7 +6,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
 import { OrderStatusBadge } from "@/components/OrderStatusBadge";
-import { Package, ChevronRight } from "lucide-react";
+import { Package, ChevronRight, Store, Truck } from "lucide-react";
 
 // Page requires DB queries — render dynamically
 export const dynamic = "force-dynamic";
@@ -52,11 +52,17 @@ export default async function OrdersPage() {
               <Link
                 key={order.id}
                 href={`/orders/${order.id}`}
-                className="block bg-white rounded-xl shadow-sm hover:shadow-md transition-all p-6 border border-[#E0D8C8] group"
+                className="block bg-white rounded-xl shadow-sm hover:shadow-md transition-all p-6 border border-[#E0D8C8] group hover:border-[#4A6B6D]/30"
               >
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-3">
+                      {/* Delivery method icon */}
+                      {order.deliveryMethod === "delivery" ? (
+                        <Truck className="h-4 w-4 text-[#8A9283]" />
+                      ) : (
+                        <Store className="h-4 w-4 text-[#8A9283]" />
+                      )}
                       <span className="text-lg font-semibold text-[#2C2C2C]">
                         #{order.id}
                       </span>

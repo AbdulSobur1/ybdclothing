@@ -155,8 +155,25 @@ export default function CheckoutPage() {
   // ── Order Confirmation Screen ──
   if (orderResult) {
     return (
-      <div className="flex-1 bg-[#F2EDE1] py-20 px-4">
-        <div className="max-w-lg mx-auto text-center page-enter">
+      <div className="flex-1 bg-[#F2EDE1] py-20 px-4 relative overflow-hidden">
+        {/* Confetti particles */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-2 h-2 rounded-full opacity-0"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                backgroundColor: ["#A6822E", "#4A6B6D", "#C4A85D", "#25D366", "#E8E2D4"][i % 5],
+                animation: `confetti-fall ${1.5 + Math.random() * 2}s ease-out ${Math.random() * 0.5}s forwards`,
+                transform: `rotate(${Math.random() * 360}deg)`,
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="max-w-lg mx-auto text-center page-enter relative">
           {/* Animated checkmark */}
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-emerald-100 flex items-center justify-center">
             <Check className="h-10 w-10 text-emerald-600 animate-bounce-in" />

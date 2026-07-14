@@ -94,16 +94,13 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative text-sm font-medium transition-colors py-1 ${
+                className={`text-sm font-medium transition-all duration-200 px-4 py-1.5 rounded-full ${
                   isActive(link.href)
-                    ? "text-[#4A6B6D] font-semibold"
-                    : "text-[#5A5A4A] hover:text-[#4A6B6D]"
+                    ? "bg-[#4A6B6D] text-white shadow-sm"
+                    : "text-[#5A5A4A] hover:bg-[#4A6B6D]/10 hover:text-[#4A6B6D]"
                 }`}
               >
                 {link.label}
-                {isActive(link.href) && (
-                  <span className="absolute -bottom-0.5 left-0 right-0 h-0.5 bg-[#4A6B6D] rounded-full" />
-                )}
               </Link>
             ))}
           </div>

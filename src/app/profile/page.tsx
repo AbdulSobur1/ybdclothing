@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { User, Mail, Phone, MapPin, Lock, Save, Loader2 } from "lucide-react";
+import { User, Mail, Phone, MapPin, Lock, Save, Loader2, Package } from "lucide-react";
+import Link from "next/link";
 
 interface Profile {
   full_name: string;
@@ -111,15 +112,42 @@ export default function ProfilePage() {
     );
   }
 
+  // Generate initials for avatar
+  const initials = profile?.full_name
+    ? profile.full_name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+    : "?";
+
   return (
     <div className="flex-1 bg-[#F2EDE1] py-12 px-4">
-      <div className="max-w-2xl mx-auto">
-        <h1
-          className="text-3xl font-bold text-[#2C2C2C] mb-8"
-          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-        >
-          My Profile
-        </h1>
+      <div className="max-w-2xl mx-auto page-enter">
+        {/* Profile Header with Avatar */}
+        <div className="flex items-center gap-5 mb-8">
+          <div className="w-16 h-16 rounded-full bg-[#4A6B6D] flex items-center justify-center shadow-md">
+            <span className="text-xl font-bold text-white" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+              {initials}
+            </span>
+          </div>
+          <div>
+            <h1
+              className="text-3xl font-bold text-[#2C2C2C]"
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+            >
+              {profile?.full_name ?? "My Profile"}
+            </h1>
+            <p className="text-sm text-[#8A9283]">{profile?.email}</p>
+          </div>
+        </div>
+
+        {/* Quick Links */}
+        <div className="flex gap-3 mb-6">
+          <Link
+            href="/orders"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-[#E0D8C8] text-sm font-medium text-[#5A5A4A] hover:border-[#4A6B6D] hover:text-[#4A6B6D] transition-all shadow-sm"
+          >
+            <Package className="h-4 w-4" />
+            My Orders
+          </Link>
+        </div>
 
         {message && (
           <div
@@ -136,17 +164,6 @@ export default function ProfilePage() {
             <User className="h-5 w-5 text-[#4A6B6D]" /> Personal Information
           </h2>
 
-          <div className="space-y-4 mb-6">
-            <div className="flex items-center gap-3 text-sm">
-              <Mail className="h-4 w-4 text-[#8A9283]" />
-              <span className="text-[#5A5A4A]">{profile?.email}</span>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <User className="h-4 w-4 text-[#8A9283]" />
-              <span className="text-[#5A5A4A]">{profile?.full_name}</span>
-            </div>
-          </div>
-
           <form onSubmit={handleSaveProfile} className="space-y-4">
             <div>
               <label htmlFor="phone" className="block text-sm font-medium text-[#5A5A4A] mb-1">
@@ -157,8 +174,10 @@ export default function ProfilePage() {
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-[#E0D8C8] bg-white text-[#2C2C2C] focus:outline-none focus:ring-2 focus:ring-[#4A6B6D]/30 focus:border-[#4A6B6D] transition-all"
+                placeholder="+234 800 000 0000"
+                className="w-full px-4 py-2.5 rounded-lg border border-[#E0D8C8] bg-white text-[#2C2C2C] placeholder-[#B8B2A3] focus:outline-none focus:ring-2 focus:ring-[#4A6B6D]/30 focus:border-[#4A6B6D] transition-all"
               />
+              <p className="text-xs text-[#8A9283] mt-1">Nigerian format: +234 800 000 0000</p>
             </div>
             <div>
               <label htmlFor="address" className="block text-sm font-medium text-[#5A5A4A] mb-1">
