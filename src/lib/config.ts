@@ -10,9 +10,10 @@ export const config = {
     accountName: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME ?? "Qudus Olatunbosun",
     accountNumber: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NUMBER ?? "9164606486",
   },
-  ownerEmail: process.env.OWNER_EMAIL ?? "owner@ybdclothing.com",
+  ownerEmail: process.env.OWNER_EMAIL ?? "qudusolashile16@gmail.com",
   resendFrom: process.env.RESEND_FROM_EMAIL ?? "noreply@ybdclothing.com",
-  whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "2348000000000",
+  whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "2347081698695",
+  phone: process.env.NEXT_PUBLIC_PHONE_NUMBER ?? "09164606486",
   storage: {
     receiptsBucket: "receipts",
     productImagesBucket: "product-images",

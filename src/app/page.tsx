@@ -107,15 +107,13 @@ export default function HomePage() {
               </h2>
               <div className="space-y-4 text-[#D4CFC2] leading-relaxed">
                 <p>
-                  YBD Clothing is more than a brand — it&apos;s a statement. We craft premium
-                  streetwear for those who refuse to blend in. Every piece is designed with
-                  intention, built with quality materials, and made for those who dare to
-                  stand out.
+                  YBD is a premium clothing brand dedicated to creating timeless designs
+                  that reflect confidence, purpose, and individuality. Every piece is
+                  crafted to inspire self-expression while maintaining exceptional quality
+                  and attention to detail.
                 </p>
                 <p>
-                  From the streets of Lagos to the world, YBD represents hustle, creativity,
-                  and the unapologetic pursuit of greatness. Our designs draw from Nigerian
-                  culture, contemporary fashion, and the energy of a new generation.
+                  First Gate, Ikorodu, Lagos State.
                 </p>
               </div>
             </div>
