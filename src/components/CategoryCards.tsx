@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
+
 /**
  * Category shortcut cards for the homepage.
- * Must be a client component because it uses onClick and dispatches custom events.
+ * Links to the /shop page with a category filter parameter.
  */
 export function CategoryCards() {
   const categories = [
@@ -35,19 +37,14 @@ export function CategoryCards() {
     },
   ];
 
-  const handleClick = (category: string, title: string) => {
-    document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
-    window.dispatchEvent(new CustomEvent("category-filter", { detail: category }));
-  };
-
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
       {categories.map((cat) => (
-        <button
+        <Link
           key={cat.title}
+          href={`/shop?category=${cat.category}`}
           aria-label={`Shop ${cat.title}`}
-          onClick={() => handleClick(cat.category, cat.title)}
-          className={`group relative overflow-hidden rounded-2xl bg-white border-2 ${cat.borderColor} ${cat.hoverStyle} p-6 sm:p-8 transition-all duration-300 text-left w-full cursor-pointer`}
+          className={`group relative overflow-hidden rounded-2xl bg-white border-2 ${cat.borderColor} ${cat.hoverStyle} p-6 sm:p-8 transition-all duration-300 text-left w-full cursor-pointer block`}
         >
           <div className={`absolute inset-0 bg-gradient-to-br ${cat.bgColor} opacity-50`} />
           <div className="relative">
@@ -63,7 +60,7 @@ export function CategoryCards() {
               Shop {cat.title} <span className="text-lg">→</span>
             </span>
           </div>
-        </button>
+        </Link>
       ))}
     </div>
   );

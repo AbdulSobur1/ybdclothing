@@ -1,15 +1,32 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { config } from "@/lib/config";
+import { Mail, Check, Loader2 } from "lucide-react";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterStatus, setNewsletterStatus] = useState<"idle" | "loading" | "success">("idle");
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsletterEmail) return;
+    setNewsletterStatus("loading");
+    // Placeholder: in production, integrate with an email service
+    await new Promise((r) => setTimeout(r, 800));
+    setNewsletterStatus("success");
+    setNewsletterEmail("");
+    setTimeout(() => setNewsletterStatus("idle"), 3000);
+  };
 
   return (
     <footer className="bg-[#2C3E3F] text-[#D4CFC2] mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
-          <div>
+          <div className="md:col-span-1">
             <h3
               className="text-xl font-bold text-[#F2EDE1] mb-3"
               style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
@@ -21,15 +38,53 @@ export function Footer() {
             </p>
           </div>
 
+          {/* Newsletter */}
+          <div className="md:col-span-1">
+            <h4 className="text-sm font-semibold text-[#F2EDE1] uppercase tracking-wider mb-3">
+              Stay Updated
+            </h4>
+            <p className="text-xs text-[#B8B2A3] mb-3">
+              Get notified about new drops and exclusive offers.
+            </p>
+            <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
+              <input
+                type="email"
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
+                placeholder="your@email.com"
+                required
+                className="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-xs placeholder-[#8A9283] focus:outline-none focus:border-[#A6822E] transition-all"
+              />
+              <button
+                type="submit"
+                disabled={newsletterStatus === "loading" || newsletterStatus === "success"}
+                className="px-3 py-2 rounded-lg bg-[#A6822E] text-white text-xs font-medium hover:bg-[#8E6E1F] transition-all disabled:opacity-50"
+              >
+                {newsletterStatus === "loading" ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : newsletterStatus === "success" ? (
+                  <Check className="h-3.5 w-3.5" />
+                ) : (
+                  "Subscribe"
+                )}
+              </button>
+            </form>
+          </div>
+
           {/* Quick Links */}
-          <div>
+          <div className="md:col-span-1">
             <h4 className="text-sm font-semibold text-[#F2EDE1] uppercase tracking-wider mb-3">
               Links
             </h4>
             <ul className="space-y-2">
               <li>
                 <Link href="/" className="text-sm text-[#B8B2A3] hover:text-[#D4CFC2] transition-colors">
-                  Shop All
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link href="/shop" className="text-sm text-[#B8B2A3] hover:text-[#D4CFC2] transition-colors">
+                  Shop
                 </Link>
               </li>
               <li>
@@ -45,8 +100,8 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Contact */}
-          <div>
+          {/* Connect */}
+          <div className="md:col-span-1">
             <h4 className="text-sm font-semibold text-[#F2EDE1] uppercase tracking-wider mb-3">
               Connect
             </h4>

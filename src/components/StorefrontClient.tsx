@@ -19,6 +19,15 @@ const CATEGORIES = [
 export function StorefrontClient({ products }: StorefrontClientProps) {
   const [activeCategory, setActiveCategory] = useState("all");
 
+  // Read initial category from URL query param (from homepage category cards)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const catParam = params.get("category");
+    if (catParam && ["cap", "tee", "hat", "all"].includes(catParam)) {
+      setActiveCategory(catParam);
+    }
+  }, []);
+
   // Listen for category filter events from homepage shortcut cards
   useEffect(() => {
     const handler = (e: Event) => {

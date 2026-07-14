@@ -66,8 +66,9 @@ export function Navbar() {
   }, [supabase]);
 
   const navLinks = [
-    { href: "/", label: "Shop" },
-    { href: "/orders", label: "My Orders" },
+    { href: "/", label: "Home" },
+    { href: "/shop", label: "Shop" },
+    ...(user ? [{ href: "/orders" as const, label: "My Orders" as const }] : []),
   ];
 
   const isActive = (href: string) => {

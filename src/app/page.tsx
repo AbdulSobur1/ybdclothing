@@ -1,37 +1,6 @@
-import { db } from "@/lib/db";
-import { products, productVariants } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";import { StorefrontClient } from "@/components/StorefrontClient";
 import { CategoryCards } from "@/components/CategoryCards";
 
-// Page requires DB queries — render dynamically, not at build time
-export const dynamic = "force-dynamic";
-
-async function getProducts() {
-  const allProducts = await db
-    .select()
-    .from(products)
-    .where(eq(products.active, true))
-    .orderBy(products.createdAt);
-
-  const productsWithVariants = await Promise.all(
-    allProducts.map(async (product) => {
-      const variants = product.hasVariants
-        ? await db
-            .select()
-            .from(productVariants)
-            .where(eq(productVariants.productId, product.id))
-        : [];
-
-      return { ...product, variants };
-    }),
-  );
-
-  return productsWithVariants;
-}
-
-export default async function HomePage() {
-  const productList = await getProducts();
-
+export default function HomePage() {
   return (
     <div className="flex-1">
       {/* =============================== */}
@@ -81,10 +50,10 @@ export default async function HomePage() {
               style={{ animationDelay: "0.3s" }}
             >
               <a
-                href="#products"
+                href="/shop"
                 className="group inline-flex items-center px-6 py-3 rounded-full bg-[#A6822E] text-white font-medium hover:bg-[#8E6E1F] transition-all shadow-lg hover:shadow-xl active:scale-[0.97]"
               >
-                <span>Shop Now</span>
+                <span>Enter Store</span>
                 <span className="inline-block ml-2 transition-transform group-hover:translate-x-1">→</span>
               </a>
               <a
@@ -154,7 +123,7 @@ export default async function HomePage() {
             <div className="grid grid-cols-2 gap-4 sm:gap-6">
               {[
                 { value: "500+", label: "Happy Customers" },
-                { value: `${productList.length}`, label: "Products" },
+                { value: "6+", label: "Products" },
                 { value: "3", label: "Delivery Zones" },
                 { value: "100%", label: "Quality Guaranteed" },
               ].map((stat) => (
@@ -244,30 +213,6 @@ export default async function HomePage() {
       </section>
 
       {/* =============================== */}
-      {/* ALL PRODUCTS GRID               */}
-      {/* =============================== */}
-      <section id="products" className="bg-[#F2EDE1] py-16 sm:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <p className="text-xs text-[#A6822E] font-semibold tracking-wider uppercase mb-2">
-              Collection
-            </p>
-            <h2
-              className="text-3xl sm:text-4xl font-bold text-[#2C2C2C] mb-3"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-            >
-              All Products
-            </h2>
-            <p className="text-[#8A9283] max-w-md mx-auto">
-              Premium streetwear crafted for those who make a statement.
-            </p>
-          </div>
-
-          <StorefrontClient products={productList} />
-        </div>
-      </section>
-
-      {/* =============================== */}
       {/* FINAL CTA — SPLIT LAYOUT       */}
       {/* =============================== */}
       <section className="relative bg-[#2C3E3F] overflow-hidden">
@@ -296,10 +241,10 @@ export default async function HomePage() {
                   Create Account
                 </a>
                 <a
-                  href="#products"
+                  href="/shop"
                   className="inline-flex items-center px-8 py-3 rounded-full border border-white/30 text-white font-medium hover:bg-white/10 transition-all backdrop-blur-sm"
                 >
-                  Shop Collection
+                  Browse Products
                 </a>
               </div>
             </div>

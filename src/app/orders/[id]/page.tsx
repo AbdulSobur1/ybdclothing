@@ -9,6 +9,7 @@ import { config } from "@/lib/config";
 import { OrderStatusBadge, OrderStatusTimeline } from "@/components/OrderStatusBadge";
 import { ArrowLeft, Package, MapPin, Receipt, Banknote, MessageCircle } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
+import { ReorderButton } from "./reorder-button";
 
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>;
@@ -189,6 +190,11 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
             <MessageCircle className="h-4 w-4" />
             Chat about this order on WhatsApp
           </a>
+        </div>
+
+        {/* Reorder */}
+        <div className="text-center mt-6">
+          <ReorderButton orderId={order.id} />
         </div>
 
         <p className="text-xs text-[#B8B2A3] text-center mt-6">

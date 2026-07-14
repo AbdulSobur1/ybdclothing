@@ -6,10 +6,11 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/utils";
 import { config } from "@/lib/config";
-import { Trash2, Minus, Plus, Truck, Store, Upload, Check, Banknote, Loader2, ImageIcon } from "lucide-react";
+import { Trash2, Minus, Plus, Truck, Store, Check, Banknote, Loader2, ImageIcon } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SkeletonCheckout } from "@/components/Skeleton";
+import { ReceiptUpload } from "@/components/ReceiptUpload";
 
 interface CartItem {
   id: number;
@@ -92,10 +93,11 @@ function CheckoutContent() {
   const deliveryFee = deliveryMethod === "delivery" && selectedZone ? selectedZone.fee : 0;
   const total = subtotal + deliveryFee;
 
-  const canPlaceOrder =
+  const canPlaceOrder = !!(
     cartItems.length > 0 &&
     agreedToTerms &&
-    (deliveryMethod === "pickup" || (deliveryMethod === "delivery" && selectedZoneId && deliveryAddress));
+    (deliveryMethod === "pickup" || (deliveryMethod === "delivery" && selectedZoneId && deliveryAddress))
+  );
 
   const handleQuantityChange = async (itemId: number, newQty: number) => {
     if (newQty < 0) return;
@@ -468,19 +470,10 @@ function CheckoutContent() {
                 <label className="block text-sm font-medium text-[#5A5A4A] mb-1.5">
                   Upload Payment Receipt (optional now, required to verify)
                 </label>
-                <div className="relative">
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    onChange={(e) => setReceiptFile(e.target.files?.[0] ?? null)}
-                    className="w-full px-4 py-2.5 rounded-lg border border-[#E0D8C8] bg-white text-[#5A5A4A] file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-[#4A6B6D] file:text-white file:text-sm file:font-medium hover:file:bg-[#3A5557] transition-all"
-                  />
-                </div>
-                {receiptFile && (
-                  <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                    <Check className="h-3 w-3" /> {receiptFile.name}
-                  </p>
-                )}
+                <ReceiptUpload
+                  onFileSelected={(file) => setReceiptFile(file)}
+                  currentFile={receiptFile}
+                />
               </div>
             </div>
 
@@ -505,48 +498,119 @@ function CheckoutContent() {
 
           {/* Right: Order Summary */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-[#E0D8C8] sticky top-24">
+            {/* Desktop sticky summary */}
+            <div className="hidden lg:block bg-white rounded-xl shadow-sm p-6 border border-[#E0D8C8] sticky top-24">
               <h2 className="text-lg font-semibold text-[#2C2C2C] mb-4">Order Summary</h2>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-[#8A9283]">Subtotal</span>
-                  <span className="font-medium">{formatPrice(subtotal)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#8A9283]">
-                    Delivery {deliveryMethod === "pickup" ? "(Pickup)" : ""}
-                  </span>
-                  <span className="font-medium">
-                    {deliveryMethod === "pickup" ? "Free" : formatPrice(deliveryFee)}
-                  </span>
-                </div>
-                <div className="border-t border-[#E0D8C8] pt-3 flex justify-between">
-                  <span className="font-semibold text-[#2C2C2C]">Total</span>
-                  <span className="font-bold text-lg text-[#4A6B6D]">{formatPrice(total)}</span>
-                </div>
-              </div>
-
-              {error && (
-                <div className="mt-4 p-3 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>
-              )}
-
-              <button
-                onClick={handlePlaceOrder}
-                disabled={!canPlaceOrder || placing}
-                className="w-full mt-6 py-3 rounded-full bg-[#A6822E] text-white font-medium hover:bg-[#8E6E1F] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {placing ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <>
-                    <Check className="h-5 w-5" /> Place Order
-                  </>
-                )}
-              </button>
+              <DesktopSummary
+                subtotal={subtotal}
+                deliveryMethod={deliveryMethod}
+                deliveryFee={deliveryFee}
+                total={total}
+                error={error}
+                canPlaceOrder={canPlaceOrder}
+                placing={placing}
+                onPlaceOrder={handlePlaceOrder}
+              />
             </div>
           </div>
         </div>
+
+        {/* Mobile sticky order bar */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E0D8C8] p-4 lg:hidden z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-xs text-[#8A9283]">Total</p>
+              <p className="text-lg font-bold text-[#4A6B6D]">{formatPrice(total)}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-[#8A9283]">
+                {cartItems.length} item{cartItems.length !== 1 ? "s" : ""}
+              </p>
+              <p className="text-xs text-[#8A9283]">
+                Delivery {deliveryMethod === "pickup" ? "(Pickup)" : `+ ${formatPrice(deliveryFee)}`}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handlePlaceOrder}
+            disabled={!canPlaceOrder || placing}
+            className="w-full py-3 rounded-full bg-[#A6822E] text-white font-medium hover:bg-[#8E6E1F] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+          >
+            {placing ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <>
+                <Check className="h-5 w-5" /> Place Order
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Spacer for mobile sticky bar */}
+        <div className="h-24 lg:hidden" />
       </div>
     </div>
+  );
+}
+
+/** Desktop-only order summary content */
+function DesktopSummary({
+  subtotal,
+  deliveryMethod,
+  deliveryFee,
+  total,
+  error,
+  canPlaceOrder,
+  placing,
+  onPlaceOrder,
+}: {
+  subtotal: number;
+  deliveryMethod: string;
+  deliveryFee: number;
+  total: number;
+  error: string | null;
+  canPlaceOrder: boolean;
+  placing: boolean;
+  onPlaceOrder: () => void;
+}) {
+  return (
+    <>
+      <div className="space-y-3 text-sm">
+        <div className="flex justify-between">
+          <span className="text-[#8A9283]">Subtotal</span>
+          <span className="font-medium">{formatPrice(subtotal)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-[#8A9283]">
+            Delivery {deliveryMethod === "pickup" ? "(Pickup)" : ""}
+          </span>
+          <span className="font-medium">
+            {deliveryMethod === "pickup" ? "Free" : formatPrice(deliveryFee)}
+          </span>
+        </div>
+        <div className="border-t border-[#E0D8C8] pt-3 flex justify-between">
+          <span className="font-semibold text-[#2C2C2C]">Total</span>
+          <span className="font-bold text-lg text-[#4A6B6D]">{formatPrice(total)}</span>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mt-4 p-3 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>
+      )}
+
+      <button
+        onClick={onPlaceOrder}
+        disabled={!canPlaceOrder || placing}
+        className="w-full mt-6 py-3 rounded-full bg-[#A6822E] text-white font-medium hover:bg-[#8E6E1F] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+      >
+        {placing ? (
+          <Loader2 className="h-5 w-5 animate-spin" />
+        ) : (
+          <>
+            <Check className="h-5 w-5" /> Place Order
+          </>
+        )}
+      </button>
+    </>
   );
 }
