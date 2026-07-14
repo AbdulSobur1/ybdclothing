@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { AuthChangeEvent, Session, User as SupabaseUser } from "@supabase/supabase-js";
-import { ShoppingBag, Menu, X, User, LogOut, Package } from "lucide-react";
+import { ShoppingBag, Menu, X, User, LogOut, Package, Heart } from "lucide-react";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -69,6 +69,7 @@ export function Navbar() {
     { href: "/", label: "Home" },
     { href: "/shop", label: "Shop" },
     ...(user ? [{ href: "/orders" as const, label: "My Orders" as const }] : []),
+    ...(user ? [{ href: "/wishlist" as const, label: "Wishlist" as const }] : []),
   ];
 
   const isActive = (href: string) => {
@@ -206,6 +207,13 @@ export function Navbar() {
           ))}
           {user ? (
             <>
+              <Link
+                href="/wishlist"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#5A5A4A] hover:bg-[#E0D8C8] transition-colors"
+              >
+                <Heart className="h-4 w-4" /> Wishlist
+              </Link>
               <Link
                 href="/profile"
                 onClick={() => setMobileOpen(false)}

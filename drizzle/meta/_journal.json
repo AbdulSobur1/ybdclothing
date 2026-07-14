@@ -15,6 +15,13 @@
       "when": 1784055518580,
       "tag": "0001_spooky_wither",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784059329437,
+      "tag": "0002_flimsy_kingpin",
+      "breakpoints": true
     }
   ]
 }

@@ -92,6 +92,24 @@ export const cartItems = pgTable("cart_items", {
 });
 
 // ──────────────────────────────────────────────
+// Wishlist Items
+// ──────────────────────────────────────────────
+
+export const wishlistItems = pgTable("wishlist_items", {
+  id: serial("id").primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => authUsers.id, { onDelete: "cascade" }),
+  productId: integer("product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  variantId: integer("variant_id").references(() => productVariants.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ──────────────────────────────────────────────
 // Store Settings (persisted admin configuration)
 // ──────────────────────────────────────────────
 

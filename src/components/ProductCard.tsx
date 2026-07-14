@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import { formatPrice } from "@/lib/utils";
-import { ShoppingBag, Check, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { ShoppingBag, Check, Loader2, Heart } from "lucide-react";
+import { useState, useEffect } from "react";
 import type { ProductWithVariants } from "@/types/product";
 import { createClient } from "@/lib/supabase/client";
 
@@ -80,6 +80,23 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
 
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
+  const [wishlisted, setWishlisted] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+
+  // Check wishlist status on mount
+  useEffect(() => {
+    const checkWishlist = async () => {
+      try {
+        const res = await fetch("/api/wishlist");
+        if (res.ok) {
+          const data = await res.json();
+          const isWishlisted = data.items?.some((i: any) => i.productId === product.id);
+          setWishlisted(isWishlisted);
+        }
+      } catch {}
+    };
+    checkWishlist();
+  }, [product.id]);
 
   const handleAddToCart = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -110,6 +127,28 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
     }
   };
 
+  const handleWishlist = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      window.location.href = "/auth/login?redirect=/shop";
+      return;
+    }
+    setWishlistLoading(true);
+    try {
+      const res = await fetch("/api/wishlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id, variantId: selectedVariantId }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWishlisted(data.wishlisted);
+      }
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
+
   return (
     <div className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-[#E0D8C8]/50 hover:-translate-y-1">
       {/* Image */}
@@ -137,6 +176,26 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
         <span className="absolute top-3 left-3 px-3 py-1 text-xs font-medium bg-white/90 backdrop-blur-sm rounded-full text-[#4A6B6D] capitalize shadow-sm">
           {product.category}
         </span>
+
+        {/* Wishlist heart */}
+        <button
+          onClick={handleWishlist}
+          disabled={wishlistLoading}
+          className={`absolute top-3 right-3 p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-sm transition-all ${
+            wishlisted ? "hover:bg-rose-50" : "hover:bg-rose-50 opacity-0 group-hover:opacity-100"
+          }`}
+          title={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+        >
+          {wishlistLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin text-rose-500" />
+          ) : (
+            <Heart
+              className={`h-4 w-4 transition-colors ${
+                wishlisted ? "text-rose-500 fill-rose-500" : "text-[#8A9283] hover:text-rose-400"
+              }`}
+            />
+          )}
+        </button>
 
         {/* Quick-add overlay on hover */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
