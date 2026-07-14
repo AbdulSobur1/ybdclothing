@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { db } from "@/lib/db";
 import { products, productVariants } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -36,7 +37,7 @@ export default async function ShopPage() {
     <div className="flex-1 bg-[#F2EDE1]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 page-enter">
         {/* Breadcrumb */}
-        <a
+        <Link
           href="/"
           className="inline-flex items-center gap-1 text-sm text-[#8A9283] hover:text-[#4A6B6D] mb-6 transition-colors"
         >
@@ -44,7 +45,7 @@ export default async function ShopPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Home
-        </a>
+        </Link>
 
         {/* Page header — compact */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -64,18 +65,18 @@ export default async function ShopPage() {
           </div>
           {/* Utility links — secondary, moved to top-right */}
           <div className="flex items-center gap-2">
-            <a
+            <Link
               href="/orders"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#E0D8C8] text-xs font-medium text-[#8A9283] hover:text-[#4A6B6D] hover:border-[#4A6B6D] transition-all"
             >
               My Orders
-            </a>
-            <a
+            </Link>
+            <Link
               href="/checkout"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4A6B6D] text-white text-xs font-medium hover:bg-[#3A5557] transition-all shadow-sm"
             >
               View Cart
-            </a>
+            </Link>
           </div>
         </div>
 

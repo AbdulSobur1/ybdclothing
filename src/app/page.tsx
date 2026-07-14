@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CategoryCards } from "@/components/CategoryCards";
 
 export default function HomePage() {
@@ -49,19 +50,19 @@ export default function HomePage() {
               className="flex flex-wrap gap-3 animate-fade-in"
               style={{ animationDelay: "0.3s" }}
             >
-              <a
+              <Link
                 href="/shop"
                 className="group inline-flex items-center px-6 py-3 rounded-full bg-[#A6822E] text-white font-medium hover:bg-[#8E6E1F] transition-all shadow-lg hover:shadow-xl active:scale-[0.97]"
               >
                 <span>Enter Store</span>
                 <span className="inline-block ml-2 transition-transform group-hover:translate-x-1">→</span>
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/auth/signup"
                 className="inline-flex items-center px-6 py-3 rounded-full border border-white/30 text-white font-medium hover:bg-white/10 transition-all backdrop-blur-sm"
               >
                 Join YBD
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -234,18 +235,18 @@ export default function HomePage() {
                 craftsmanship, bold designs, and a community that stands out.
               </p>
               <div className="flex flex-wrap gap-3">
-                <a
+                <Link
                   href="/auth/signup"
                   className="inline-flex items-center px-8 py-3 rounded-full bg-[#A6822E] text-white font-medium hover:bg-[#8E6E1F] transition-all shadow-lg hover:shadow-xl active:scale-[0.97]"
                 >
                   Create Account
-                </a>
-                <a
+                </Link>
+                <Link
                   href="/shop"
                   className="inline-flex items-center px-8 py-3 rounded-full border border-white/30 text-white font-medium hover:bg-white/10 transition-all backdrop-blur-sm"
                 >
                   Browse Products
-                </a>
+                </Link>
               </div>
             </div>
 

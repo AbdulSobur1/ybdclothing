@@ -101,21 +101,29 @@ function CheckoutContent() {
 
   const handleQuantityChange = async (itemId: number, newQty: number) => {
     if (newQty < 0) return;
+    // Optimistically update the UI immediately
+    setCartItems(prev =>
+      newQty === 0
+        ? prev.filter(item => item.id !== itemId)
+        : prev.map(item => item.id === itemId ? { ...item, quantity: newQty } : item)
+    );
     const res = await fetch("/api/cart", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ itemId, quantity: newQty }),
     });
-    if (res.ok) loadData();
+    if (!res.ok) loadData(); // Revert on failure
   };
 
   const handleRemoveItem = async (itemId: number) => {
+    // Optimistically remove from UI immediately
+    setCartItems(prev => prev.filter(item => item.id !== itemId));
     const res = await fetch("/api/cart", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ itemId }),
     });
-    if (res.ok) loadData();
+    if (!res.ok) loadData(); // Revert on failure
   };
 
   const handlePlaceOrder = async () => {
@@ -276,7 +284,7 @@ function CheckoutContent() {
   return (
     <div className="flex-1 bg-[#F2EDE1]">          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 page-enter">
         {/* Back link */}
-        <a
+        <Link
           href="/shop"
           className="inline-flex items-center gap-1 text-sm text-[#8A9283] hover:text-[#4A6B6D] mb-6 transition-colors"
         >
@@ -284,7 +292,7 @@ function CheckoutContent() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Continue Shopping
-        </a>
+        </Link>
 
         {/* Progress steps */}
         <div className="flex items-center justify-center gap-2 mb-8">

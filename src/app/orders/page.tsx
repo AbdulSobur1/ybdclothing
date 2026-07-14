@@ -4,6 +4,7 @@ import { orders, orderItems, products } from "@/lib/db/schema";
 import { eq, desc, sql } from "drizzle-orm";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+
 import { formatPrice } from "@/lib/utils";
 import { OrderStatusBadge } from "@/components/OrderStatusBadge";
 import { Package, ChevronRight, Store, Truck } from "lucide-react";
@@ -29,7 +30,7 @@ export default async function OrdersPage() {
     <div className="flex-1 bg-[#F2EDE1]">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Breadcrumb */}
-        <a
+        <Link
           href="/shop"
           className="inline-flex items-center gap-1 text-sm text-[#8A9283] hover:text-[#4A6B6D] mb-6 transition-colors"
         >
@@ -37,7 +38,7 @@ export default async function OrdersPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Shop
-        </a>
+        </Link>
 
         <h1
           className="text-3xl font-bold text-[#2C2C2C] mb-8"

@@ -118,7 +118,7 @@ export default function ProfilePage() {
     <div className="flex-1 bg-[#F2EDE1] py-12 px-4">
       <div className="max-w-2xl mx-auto page-enter">
         {/* Breadcrumb */}
-        <a
+        <Link
           href="/shop"
           className="inline-flex items-center gap-1 text-sm text-[#8A9283] hover:text-[#4A6B6D] mb-6 transition-colors"
         >
@@ -126,7 +126,7 @@ export default function ProfilePage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Shop
-        </a>
+        </Link>
 
         {/* Profile Header with Avatar */}
         <div className="flex items-center gap-5 mb-8">
