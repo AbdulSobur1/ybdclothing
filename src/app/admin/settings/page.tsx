@@ -51,9 +51,11 @@ export default function AdminSettingsPage() {
       });
 
       if (res.ok) {
-        setMessage({ type: "success", text: "Settings saved! Note: some settings require Vercel env var changes to persist across deployments." });
+        const data = await res.json();
+        setMessage({ type: "success", text: data.message ?? "Settings saved successfully!" });
       } else {
-        setMessage({ type: "error", text: "Failed to save settings" });
+        const data = await res.json();
+        setMessage({ type: "error", text: data.error ?? "Failed to save settings" });
       }
     } catch {
       setMessage({ type: "error", text: "Failed to save settings" });
@@ -147,9 +149,8 @@ export default function AdminSettingsPage() {
         {/* Info box */}
         <div className="bg-[#16213e] rounded-xl border border-white/5 p-4">
           <p className="text-xs text-gray-400">
-            <strong className="text-white">Note:</strong> These settings are managed via environment variables on Vercel.
-            Changes made here will apply during the current session, but for permanent changes you&apos;ll need to
-            update the corresponding environment variables in the Vercel Dashboard.
+            <strong className="text-white">Note:</strong> These settings are stored in the database and
+            persist across deployments. Changes take effect immediately.
           </p>
         </div>
 

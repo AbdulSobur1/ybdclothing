@@ -57,8 +57,8 @@ export async function POST(request: Request) {
     .set({ status: newStatus, updatedAt: new Date() })
     .where(eq(orders.id, orderId));
 
-  // Send email notification to customer
-  if (customerEmail && (newStatus === "confirmed" || newStatus === "rejected")) {
+  // Send email notification to customer for all status changes
+  if (customerEmail) {
     sendOrderStatusUpdate({
       orderId,
       customerEmail,

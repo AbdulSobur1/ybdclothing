@@ -1,9 +1,53 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
-import { profiles } from "@/lib/db/schema";
+import { profiles, storeSettings } from "@/lib/db/schema";
 import { config } from "@/lib/config";
 import { eq } from "drizzle-orm";
+
+/**
+ * HELPERS
+ */
+
+async function checkAdmin(userId: string): Promise<boolean> {
+  const [profile] = await db
+    .select()
+    .from(profiles)
+    .where(eq(profiles.id, userId))
+    .limit(1);
+  return profile?.email === config.ownerEmail;
+}
+
+/**
+ * Read a setting from the store_settings table, falling back to config defaults.
+ */
+const SETTING_DEFAULTS: Record<string, string> = {
+  bank_name: config.bank.name,
+  bank_account_name: config.bank.accountName,
+  bank_account_number: config.bank.accountNumber,
+  owner_email: config.ownerEmail,
+  resend_from: config.resendFrom,
+  whatsapp_number: config.whatsappNumber,
+};
+
+async function getSetting(key: string): Promise<string> {
+  const [row] = await db
+    .select()
+    .from(storeSettings)
+    .where(eq(storeSettings.key, key))
+    .limit(1);
+  return row?.value ?? SETTING_DEFAULTS[key] ?? "";
+}
+
+async function setSetting(key: string, value: string): Promise<void> {
+  await db
+    .insert(storeSettings)
+    .values({ key, value, updatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: storeSettings.key,
+      set: { value, updatedAt: new Date() },
+    });
+}
 
 /**
  * HEAD /api/admin/settings — Check if current user is admin.
@@ -17,13 +61,7 @@ export async function HEAD() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const [profile] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.id, user.id))
-    .limit(1);
-
-  const isAdmin = profile?.email === config.ownerEmail;
+  const isAdmin = await checkAdmin(user.id);
 
   return new NextResponse(null, {
     status: isAdmin ? 200 : 403,
@@ -36,6 +74,7 @@ export async function HEAD() {
 
 /**
  * GET /api/admin/settings — Get current store settings (admin only).
+ * Reads from store_settings table, falling back to env vars / config defaults.
  */
 export async function GET() {
   const supabase = await createClient();
@@ -45,29 +84,33 @@ export async function GET() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const [profile] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.id, user.id))
-    .limit(1);
-
-  if (!profile || profile.email !== config.ownerEmail) {
+  if (!await checkAdmin(user.id)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
+  const [bankName, bankAccountName, bankAccountNumber, ownerEmail, resendFrom, whatsappNumber] =
+    await Promise.all([
+      getSetting("bank_name"),
+      getSetting("bank_account_name"),
+      getSetting("bank_account_number"),
+      getSetting("owner_email"),
+      getSetting("resend_from"),
+      getSetting("whatsapp_number"),
+    ]);
+
   return NextResponse.json({
-    bankName: config.bank.name,
-    bankAccountName: config.bank.accountName,
-    bankAccountNumber: config.bank.accountNumber,
-    ownerEmail: config.ownerEmail,
-    resendFrom: config.resendFrom,
-    whatsappNumber: config.whatsappNumber,
+    bankName,
+    bankAccountName,
+    bankAccountNumber,
+    ownerEmail,
+    resendFrom,
+    whatsappNumber,
   });
 }
 
 /**
  * PUT /api/admin/settings — Update store settings (admin only).
- * Uses service role client to access the raw database.
+ * Persists to the store_settings table in the database.
  */
 export async function PUT(request: Request) {
   const supabase = await createClient();
@@ -77,21 +120,30 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const [profile] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.id, user.id))
-    .limit(1);
-
-  if (!profile || profile.email !== config.ownerEmail) {
+  if (!await checkAdmin(user.id)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  // Settings are stored in environment variables — for now we just
-  // return success. In production, you'd update Vercel env vars
-  // via the Vercel API or store in a database settings table.
-  return NextResponse.json({
-    success: true,
-    message: "Settings updated. Note: some settings require Vercel env var changes to persist across deployments.",
-  });
+  const body = await request.json();
+  const { bankName, bankAccountName, bankAccountNumber, ownerEmail, resendFrom, whatsappNumber } = body;
+
+  try {
+    const updates: Promise<void>[] = [];
+    if (bankName !== undefined) updates.push(setSetting("bank_name", bankName));
+    if (bankAccountName !== undefined) updates.push(setSetting("bank_account_name", bankAccountName));
+    if (bankAccountNumber !== undefined) updates.push(setSetting("bank_account_number", bankAccountNumber));
+    if (ownerEmail !== undefined) updates.push(setSetting("owner_email", ownerEmail));
+    if (resendFrom !== undefined) updates.push(setSetting("resend_from", resendFrom));
+    if (whatsappNumber !== undefined) updates.push(setSetting("whatsapp_number", whatsappNumber));
+
+    await Promise.all(updates);
+
+    return NextResponse.json({
+      success: true,
+      message: "Settings saved successfully to the database.",
+    });
+  } catch (error) {
+    console.error("Failed to save settings:", error);
+    return NextResponse.json({ error: "Failed to save settings" }, { status: 500 });
+  }
 }

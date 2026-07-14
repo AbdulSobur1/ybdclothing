@@ -8,6 +8,13 @@
       "when": 1783873566105,
       "tag": "0000_stormy_snowbird",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784055518580,
+      "tag": "0001_spooky_wither",
+      "breakpoints": true
     }
   ]
 }

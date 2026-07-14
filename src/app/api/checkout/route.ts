@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import {
   cartItems,
@@ -17,8 +17,11 @@ import { eq, inArray, sql } from "drizzle-orm";
 /**
  * POST /api/checkout — Create an order from the user's cart.
  *
- * Security: all prices are re-computed server-side from the database.
- * The client-submitted total is never trusted.
+ * Security:
+ * - All prices are re-computed server-side from the database (never trust client prices).
+ * - Stock validation + decrement happens inside a database transaction with
+ *   SELECT ... FOR UPDATE to prevent concurrent overselling.
+ * - The entire order creation is atomic — if anything fails, everything rolls back.
  */
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -50,7 +53,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Profile not found" }, { status: 404 });
   }
 
-  // Fetch cart items
+  // Fetch cart items (outside transaction — read-only, no contention)
   const cartItemsList = await db
     .select({
       id: cartItems.id,
@@ -70,7 +73,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
   }
 
-  // Validate all products exist and are active
+  // Validate all products exist and are active (outside transaction — read-only)
   for (const item of cartItemsList) {
     if (!item.product || !item.product.active) {
       return NextResponse.json(
@@ -78,22 +81,9 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-
-    // Check stock
-    if (item.variant) {
-      if (item.variant.stockQuantity < item.quantity) {
-        return NextResponse.json(
-          {
-            error: `Not enough stock for "${item.product.name}" (${item.variant.color ?? ""} ${item.variant.size ?? ""}). Only ${item.variant.stockQuantity} left.`,
-          },
-          { status: 400 },
-        );
-      }
-    }
   }
 
   // Calculate subtotal server-side from DB prices
-  // Products were validated as non-null above, so assertion is safe.
   const subtotal = cartItemsList.reduce((sum, item) => {
     return sum + (item.product!.basePrice * item.quantity);
   }, 0);
@@ -123,49 +113,96 @@ export async function POST(request: Request) {
 
   const total = subtotal + deliveryFee;
 
-  // Create the order (status starts at pending_verification — the customer
-  // will upload a receipt later, but the order is placed immediately)
-  const [newOrder] = await db
-    .insert(orders)
-    .values({
-      userId: user.id,
-      status: "pending_verification",
-      deliveryMethod: deliveryMethod ?? null,
-      deliveryZoneId: deliveryZoneId ?? null,
-      deliveryFee: deliveryFee || null,
-      deliveryAddress: deliveryMethod === "delivery" ? deliveryAddress : null,
-      subtotal,
-      total,
-    })
-    .returning();
+  // ── ATOMIC TRANSACTION ──
+  // Stock check, order creation, stock decrement, and cart clear all happen
+  // inside one transaction with row-level locking. If any step fails,
+  // everything is rolled back — no partial orders, no phantom stock.
+  const variantIdsToLock = cartItemsList
+    .filter((item) => item.variant)
+    .map((item) => item.variant!.id);
 
-  // Insert order items (snapshot product name + price)
-  for (const item of cartItemsList) {
-    await db.insert(orderItems).values({
-      orderId: newOrder.id,
-      productId: item.productId,
-      variantId: item.variantId,
-      nameSnapshot: item.product!.name,
-      priceSnapshot: item.product!.basePrice,
-      quantity: item.quantity,
-    });
-  }
+  let newOrder;
+  try {
+    newOrder = await db.transaction(async (tx) => {
+      // 1. Lock variant rows to prevent concurrent decrements
+      if (variantIdsToLock.length > 0) {
+        await tx.execute(
+          sql`SELECT id FROM ${productVariants} WHERE id IN (${sql.join(variantIdsToLock, sql`,`)}) FOR UPDATE`,
+        );
+      }
 
-  // Decrement stock (tradeoff: abandoned carts can temporarily lock stock,
-  // but this is simpler and more correct than doing nothing)
-  for (const item of cartItemsList) {
-    if (item.variant) {
-      await db
-        .update(productVariants)
-        .set({
-          stockQuantity: sql`${productVariants.stockQuantity} - ${item.quantity}`,
+      // 2. Read fresh stock values under lock
+      const freshVariants = variantIdsToLock.length > 0
+        ? await tx
+            .select()
+            .from(productVariants)
+            .where(inArray(productVariants.id, variantIdsToLock))
+        : [];
+
+      const freshVariantMap = new Map(freshVariants.map((v) => [v.id, v]));
+
+      // 3. Validate stock against locked values
+      for (const item of cartItemsList) {
+        if (item.variant) {
+          const fresh = freshVariantMap.get(item.variant.id);
+          const available = fresh?.stockQuantity ?? 0;
+          if (available < item.quantity) {
+            throw new Error(
+              `Not enough stock for "${item.product!.name}" (${item.variant.color ?? ""} ${item.variant.size ?? ""}). Only ${available} left.`,
+            );
+          }
+        }
+      }
+
+      // 4. Create the order (status starts at pending_payment — the customer
+      //    must complete payment before the order can be verified)
+      const [created] = await tx
+        .insert(orders)
+        .values({
+          userId: user.id,
+          status: "pending_payment",
+          deliveryMethod: deliveryMethod ?? null,
+          deliveryZoneId: deliveryZoneId ?? null,
+          deliveryFee: deliveryFee || null,
+          deliveryAddress: deliveryMethod === "delivery" ? deliveryAddress : null,
+          subtotal,
+          total,
         })
-        .where(eq(productVariants.id, item.variant.id));
-    }
-  }
+        .returning();
 
-  // Clear the cart
-  await db.delete(cartItems).where(eq(cartItems.userId, user.id));
+      // 5. Insert order items (snapshot product name + price)
+      for (const item of cartItemsList) {
+        await tx.insert(orderItems).values({
+          orderId: created.id,
+          productId: item.productId,
+          variantId: item.variantId,
+          nameSnapshot: item.product!.name,
+          priceSnapshot: item.product!.basePrice,
+          quantity: item.quantity,
+        });
+      }
+
+      // 6. Decrement stock
+      for (const item of cartItemsList) {
+        if (item.variant) {
+          await tx
+            .update(productVariants)
+            .set({
+              stockQuantity: sql`${productVariants.stockQuantity} - ${item.quantity}`,
+            })
+            .where(eq(productVariants.id, item.variant.id));
+        }
+      }
+
+      // 7. Clear the cart
+      await tx.delete(cartItems).where(eq(cartItems.userId, user.id));
+
+      return created;
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to place order";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
 
   // Send notification to owner (fire-and-forget — don't block the response)
   const adminUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/admin/orders/${newOrder.id}`;
@@ -180,6 +217,6 @@ export async function POST(request: Request) {
   return NextResponse.json({
     orderId: newOrder.id,
     total,
-    message: "Order placed successfully! We'll email you once confirmed.",
+    message: "Order placed successfully! Please complete your bank transfer to activate your order.",
   });
 }

@@ -73,12 +73,37 @@ CREATE POLICY "Users can insert own order items"
   );
 
 -- 5. Storage: Receipts bucket
--- Run this in Supabase Dashboard → Storage → Policies
--- Or use this SQL:
--- (Note: Storage policies are managed in the Dashboard UI)
--- Policy: Allow authenticated users to upload receipts
---   ON bucket receipts FOR INSERT
---   WITH CHECK (auth.role() = 'authenticated');
+-- Run these in Supabase Dashboard → SQL Editor to set up Storage policies.
+-- (Storage buckets and their policies can also be managed via the Dashboard UI.)
+
+-- Ensure the receipts bucket exists:
+-- INSERT INTO storage.buckets (id, name, public) VALUES ('receipts', 'receipts', false)
+-- ON CONFLICT (id) DO NOTHING;
+
+-- Allow authenticated users to upload their own receipts
+CREATE POLICY "Users can upload receipts"
+  ON storage.objects FOR INSERT
+  WITH CHECK (
+    bucket_id = 'receipts'
+    AND auth.role() = 'authenticated'
+  );
+
+-- Allow users to read their own receipts
+CREATE POLICY "Users can read own receipts"
+  ON storage.objects FOR SELECT
+  USING (
+    bucket_id = 'receipts'
+    AND auth.role() = 'authenticated'
+    AND (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- Allow the service role full access (for admin viewing)
+CREATE POLICY "Service role can read all receipts"
+  ON storage.objects FOR SELECT
+  USING (
+    bucket_id = 'receipts'
+    AND auth.role() = 'service_role'
+  );
 
 -- 6. Products (public read-only)
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;

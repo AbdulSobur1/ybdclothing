@@ -92,6 +92,17 @@ export const cartItems = pgTable("cart_items", {
 });
 
 // ──────────────────────────────────────────────
+// Store Settings (persisted admin configuration)
+// ──────────────────────────────────────────────
+
+export const storeSettings = pgTable("store_settings", {
+  id: serial("id").primaryKey(),
+  key: varchar("key", { length: 100 }).notNull().unique(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ──────────────────────────────────────────────
 // Delivery Zones
 // ──────────────────────────────────────────────
 
