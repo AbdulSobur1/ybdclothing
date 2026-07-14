@@ -51,11 +51,14 @@ export function WishlistClient({ items: initialItems }: WishlistClientProps) {
 
   async function handleAddToCart(product: WishlistItem["product"], variantId: number | null) {
     if (!product) return;
-    await fetch("/api/cart", {
+    const res = await fetch("/api/cart", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ productId: product.id, variantId, quantity: 1 }),
     });
+    if (res.ok) {
+      window.dispatchEvent(new CustomEvent("cart-updated"));
+    }
     router.push("/checkout");
   }
 

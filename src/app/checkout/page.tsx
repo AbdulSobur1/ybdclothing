@@ -112,7 +112,11 @@ function CheckoutContent() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ itemId, quantity: newQty }),
     });
-    if (!res.ok) loadData(); // Revert on failure
+    if (res.ok) {
+      window.dispatchEvent(new CustomEvent("cart-updated"));
+    } else {
+      loadData(); // Revert on failure
+    }
   };
 
   const handleRemoveItem = async (itemId: number) => {
@@ -123,7 +127,11 @@ function CheckoutContent() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ itemId }),
     });
-    if (!res.ok) loadData(); // Revert on failure
+    if (res.ok) {
+      window.dispatchEvent(new CustomEvent("cart-updated"));
+    } else {
+      loadData(); // Revert on failure
+    }
   };
 
   const handlePlaceOrder = async () => {

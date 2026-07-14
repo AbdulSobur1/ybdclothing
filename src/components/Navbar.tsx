@@ -45,17 +45,26 @@ export function Navbar() {
       setCartCount(0);
       return;
     }
-    const fetchCart = async () => {
-      try {
-        const res = await fetch("/api/cart");
-        const data = await res.json();
-        setCartCount(data.items?.length ?? 0);
-      } catch {
-        // ignore
-      }
-    };
-    fetchCart();
+    fetchCartCount();
   }, [user]);
+
+  // Listen for cart-updated events so the badge reflects changes immediately
+  useEffect(() => {
+    if (!user) return;
+    const handler = () => fetchCartCount();
+    window.addEventListener("cart-updated", handler);
+    return () => window.removeEventListener("cart-updated", handler);
+  }, [user]);
+
+  async function fetchCartCount() {
+    try {
+      const res = await fetch("/api/cart");
+      const data = await res.json();
+      setCartCount(data.items?.length ?? 0);
+    } catch {
+      // ignore
+    }
+  }
 
   const handleLogout = useCallback(async () => {
     if (supabase) {

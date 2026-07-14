@@ -29,6 +29,7 @@ export function ReorderButton({ orderId }: ReorderButtonProps) {
       if (res.ok) {
         setStatus("success");
         setMessage("Items added to cart!");
+        window.dispatchEvent(new CustomEvent("cart-updated"));
         setTimeout(() => {
           router.push("/checkout");
         }, 1200);

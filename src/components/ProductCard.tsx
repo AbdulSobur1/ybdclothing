@@ -150,6 +150,7 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
       if (res.ok) {
         setAdded(true);
         onCartUpdated();
+        window.dispatchEvent(new CustomEvent("cart-updated"));
         setTimeout(() => setAdded(false), 2000);
       }
     } finally {
