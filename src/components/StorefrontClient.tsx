@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { ProductCard } from "@/components/ProductCard";
 import { ShoppingBag } from "lucide-react";
 import type { ProductWithVariants } from "@/types/product";
@@ -18,6 +18,19 @@ const CATEGORIES = [
 
 export function StorefrontClient({ products }: StorefrontClientProps) {
   const [activeCategory, setActiveCategory] = useState("all");
+
+  // Listen for category filter events from homepage shortcut cards
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const cat = customEvent.detail;
+      if (["cap", "tee", "hat", "all"].includes(cat)) {
+        setActiveCategory(cat);
+      }
+    };
+    window.addEventListener("category-filter", handler);
+    return () => window.removeEventListener("category-filter", handler);
+  }, []);
 
   const filteredProducts = useMemo(() => {
     if (activeCategory === "all") return products;

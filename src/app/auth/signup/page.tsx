@@ -25,7 +25,6 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [passwordStrength, setPasswordStrength] = useState(0);
-  const [emailSent, setEmailSent] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -126,64 +125,9 @@ export default function SignupPage() {
       }
     }
 
-    // If email confirmation is required, Supabase won't return a session.
-    // The user needs to check their email before they can log in.
-    const hasSession = !!authData.session;
-    if (!hasSession) {
-      setEmailSent(true);
-      setLoading(false);
-      return;
-    }
-
     router.push("/");
     router.refresh();
   };
-
-  // ── Email Confirmation Screen ──
-  if (emailSent) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-[#F2EDE1] py-16 px-4">
-        <div className="w-full max-w-md text-center">
-          <div className="bg-white rounded-2xl shadow-sm p-8 border border-[#E0D8C8]">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-100 flex items-center justify-center">
-              <svg className="h-8 w-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <h1
-              className="text-2xl font-bold text-[#2C2C2C] mb-3"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-            >
-              Check Your Email
-            </h1>
-            <p className="text-[#8A9283] text-sm mb-2">
-              We&apos;ve sent a confirmation email to{" "}
-              <strong className="text-[#4A6B6D]">{formData.email}</strong>.
-            </p>
-            <p className="text-[#8A9283] text-sm mb-6">
-              Click the link in the email to activate your account, then sign in.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <a
-                href={`https://mail.google.com`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center px-6 py-2.5 rounded-full bg-[#4A6B6D] text-white text-sm font-medium hover:bg-[#3A5557] transition-all"
-              >
-                Open Gmail
-              </a>
-              <Link
-                href="/auth/login"
-                className="inline-flex items-center px-6 py-2.5 rounded-full border border-[#4A6B6D] text-[#4A6B6D] text-sm font-medium hover:bg-[#4A6B6D] hover:text-white transition-all"
-              >
-                Sign In
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex-1 flex items-center justify-center bg-[#F2EDE1] py-16 px-4">
