@@ -17,6 +17,7 @@ import {
   Menu,
   X,
   Store,
+
 } from "lucide-react";
 
 const sidebarLinks = [
@@ -36,6 +37,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
 
   useEffect(() => {
     checkAdmin();
@@ -70,6 +72,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
     setChecking(false);
   }
+
+  // Fetch pending orders count for badge
+  useEffect(() => {
+    if (!isAdmin) return;
+    const fetchPending = async () => {
+      try {
+        const res = await fetch("/api/admin/orders?status=pending_verification&limit=1");
+        if (res.ok) {
+          const data = await res.json();
+          setPendingOrdersCount(data.pagination?.total ?? 0);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    fetchPending();
+    // Poll every 60 seconds
+    const interval = setInterval(fetchPending, 60000);
+    return () => clearInterval(interval);
+  }, [isAdmin]);
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -159,8 +181,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 }`}
                 title={collapsed ? link.label : undefined}
               >
-                <Icon className="h-5 w-5 flex-shrink-0" />
-                {!collapsed && <span>{link.label}</span>}
+                <div className="relative">
+                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  {/* Notification badge */}
+                  {link.href === "/admin/orders" && pendingOrdersCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center shadow-lg">
+                      {pendingOrdersCount > 9 ? "9+" : pendingOrdersCount}
+                    </span>
+                  )}
+                </div>
+                {!collapsed && (
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span>{link.label}</span>
+                    {link.href === "/admin/orders" && pendingOrdersCount > 0 && (
+                      <span className="px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[10px] font-medium">
+                        {pendingOrdersCount} pending
+                      </span>
+                    )}
+                  </div>
+                )}
               </Link>
             );
           })}

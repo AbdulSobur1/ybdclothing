@@ -7,7 +7,7 @@ import { eq, and, desc, sql } from "drizzle-orm";
 
 /**
  * GET /api/admin/orders — List all orders with optional filters.
- * Query params: status, search (by order ID or customer name), page, limit
+ * Query params: status, search (by order ID or customer name), page, limit, export=csv
  */
 export async function GET(request: Request) {
   const supabase = await createClient();
@@ -33,6 +33,7 @@ export async function GET(request: Request) {
   const page = parseInt(searchParams.get("page") ?? "1", 10);
   const limit = parseInt(searchParams.get("limit") ?? "50", 10);
   const offset = (page - 1) * limit;
+  const isExport = searchParams.get("export") === "csv";
 
   // Build conditions
   const conditions: ReturnType<typeof eq>[] = [];
@@ -127,6 +128,34 @@ export async function GET(request: Request) {
       };
     }),
   );
+
+  if (isExport) {
+    // CSV export — return a downloadable CSV file with ALL matched orders
+    const csvRows = [
+      ["Order ID", "Customer", "Email", "Status", "Items", "Total (₦)", "Delivery", "Zone", "Date"].join(","),
+      ...ordersWithDetails.map((o) =>
+        [
+          o.id,
+          `"${              o.customer?.fullName ?? "Unknown"}"`,
+          `"${o.customer?.email ?? ""}"`,
+          o.status,
+          o.itemCount,
+          o.total / 100, // price in Naira
+          o.deliveryMethod ?? "N/A",
+          `"${o.zoneName ?? ""}"`,
+          new Date(o.createdAt).toISOString().split("T")[0],
+        ].join(","),
+      ),
+    ].join("\n");
+
+    return new NextResponse(csvRows, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="orders-${new Date().toISOString().split("T")[0]}.csv"`,
+      },
+    });
+  }
 
   return NextResponse.json({
     orders: ordersWithDetails,

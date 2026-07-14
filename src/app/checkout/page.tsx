@@ -8,6 +8,7 @@ import { formatPrice } from "@/lib/utils";
 import { config } from "@/lib/config";
 import { Trash2, Minus, Plus, Truck, Store, Upload, Check, Banknote, Loader2, ImageIcon } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 interface CartItem {
   id: number;
@@ -35,6 +36,14 @@ interface DeliveryZone {
 }
 
 export default function CheckoutPage() {
+  return (
+    <ErrorBoundary>
+      <CheckoutContent />
+    </ErrorBoundary>
+  );
+}
+
+function CheckoutContent() {
   const router = useRouter();
   const supabase = createClient();
 

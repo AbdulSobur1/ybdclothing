@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
 import { OrderStatusBadge } from "@/components/OrderStatusBadge";
-import { Search, ShoppingBag, Loader2, ChevronRight } from "lucide-react";
+import { Search, ShoppingBag, Loader2, ChevronRight, Download } from "lucide-react";
 
 interface Order {
   id: number;
@@ -71,13 +71,24 @@ export default function AdminOrdersPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-white">Orders</h1>
-        <div className="text-sm text-gray-400">
-          {!loading && `${orders.length} order${orders.length !== 1 ? "s" : ""}`}
-        </div>
-      </div>
+    <div className="space-y-6">          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h1 className="text-2xl font-bold text-white">Orders</h1>
+            <div className="flex items-center gap-3">
+              <div className="text-sm text-gray-400">
+                {!loading && `${orders.length} order${orders.length !== 1 ? "s" : ""}`}
+              </div>
+              {!loading && orders.length > 0 && (
+                <a
+                  href={`/api/admin/orders?${new URLSearchParams({ status: statusFilter, search, export: "csv" })}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 text-emerald-400 text-xs font-medium hover:bg-emerald-600/30 transition-all"
+                  download
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Export CSV
+                </a>
+              )}
+            </div>
+          </div>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">

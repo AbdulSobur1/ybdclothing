@@ -12,6 +12,9 @@ import {
   TrendingUp,
   ArrowRight,
   Loader2,
+  RefreshCw,
+  BarChart3,
+  TrendingDown,
 } from "lucide-react";
 
 interface DashboardData {
@@ -54,6 +57,8 @@ const statusColors: Record<string, string> = {
 export default function AdminDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [chartView, setChartView] = useState<"bar" | "line">("bar");
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     loadStats();
@@ -61,6 +66,7 @@ export default function AdminDashboard() {
 
   async function loadStats() {
     try {
+      setRefreshing(true);
       const res = await fetch("/api/admin/stats");
       if (res.ok) {
         setData(await res.json());
@@ -69,6 +75,7 @@ export default function AdminDashboard() {
       console.error("Failed to load stats:", err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }
 
@@ -94,9 +101,20 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-        <p className="text-gray-400 text-sm mt-1">Overview of your store performance</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+          <p className="text-gray-400 text-sm mt-1">Overview of your store performance</p>
+        </div>
+        <button
+          onClick={loadStats}
+          disabled={refreshing}
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 text-gray-400 text-sm hover:bg-white/10 hover:text-white transition-all disabled:opacity-50"
+          title="Refresh data"
+        >
+          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+          Refresh
+        </button>
       </div>
 
       {/* Stats cards */}
@@ -146,26 +164,71 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue chart */}
         <div className="lg:col-span-2 bg-[#16213e] rounded-xl p-5 border border-white/5">
-          <h2 className="text-sm font-semibold text-white mb-4">Revenue (Last 6 Months)</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-white">Revenue (Last 6 Months)</h2>
+            <button
+              onClick={() => setChartView(chartView === "bar" ? "line" : "bar")}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 text-gray-400 text-xs hover:bg-white/10 hover:text-white transition-all"
+              title={`Switch to ${chartView === "bar" ? "line" : "bar"} chart`}
+            >
+              {chartView === "bar" ? <TrendingDown className="h-3.5 w-3.5" /> : <BarChart3 className="h-3.5 w-3.5" />}
+              {chartView === "bar" ? "Line" : "Bar"}
+            </button>
+          </div>
           {data.ordersByMonth.length > 0 ? (
             <div className="relative" style={{ height: chartHeight }}>
-              <div className="flex items-end justify-between gap-2 h-full">
-                {data.ordersByMonth.map((item, i) => {
-                  const height = (item.revenue / maxRevenue) * chartHeight;
-                  return (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
-                      <span className="text-[10px] text-gray-500">
-                        {formatPrice(item.revenue)}
-                      </span>
-                      <div
-                        className="w-full bg-gradient-to-t from-[#A6822E] to-[#C4A85D] rounded-t-sm transition-all duration-500 hover:opacity-80"
-                        style={{ height: Math.max(height, 4) }}
-                      />
-                      <span className="text-[10px] text-gray-500">{item.month.split(" ")[0]}</span>
-                    </div>
-                  );
-                })}
-              </div>
+              {chartView === "bar" ? (
+                <div className="flex items-end justify-between gap-2 h-full">
+                  {data.ordersByMonth.map((item, i) => {
+                    const height = (item.revenue / maxRevenue) * chartHeight;
+                    return (
+                      <div key={i} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+                        <span className="text-[10px] text-gray-500">
+                          {formatPrice(item.revenue)}
+                        </span>
+                        <div
+                          className="w-full bg-gradient-to-t from-[#A6822E] to-[#C4A85D] rounded-t-sm transition-all duration-500 hover:opacity-80"
+                          style={{ height: Math.max(height, 4) }}
+                        />
+                        <span className="text-[10px] text-gray-500">{item.month.split(" ")[0]}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="relative h-full">
+                  <svg className="w-full h-full" viewBox={`0 0 ${data.ordersByMonth.length * 60} ${chartHeight}`} preserveAspectRatio="none">
+                    <polyline
+                      fill="none"
+                      stroke="url(#goldGradient)"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      points={data.ordersByMonth
+                        .map((item, i) => {
+                          const x = i * 60 + 30;
+                          const y = chartHeight - (item.revenue / maxRevenue) * chartHeight;
+                          return `${x},${y}`;
+                        })
+                        .join(" ")}
+                    />
+                    <defs>
+                      <linearGradient id="goldGradient" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#A6822E" />
+                        <stop offset="100%" stopColor="#C4A85D" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <div className="flex justify-between mt-2">
+                    {data.ordersByMonth.map((item, i) => (
+                      <div key={i} className="flex flex-col items-center gap-1">
+                        <span className="text-[10px] text-gray-500">{formatPrice(item.revenue)}</span>
+                        <span className="text-[10px] text-gray-500">{item.month.split(" ")[0]}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-gray-500 text-sm py-8 text-center">No revenue data yet</p>
