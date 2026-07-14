@@ -162,20 +162,23 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#E8E2D4] to-[#DDD6C8]">
             <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-2 rounded-full bg-[#4A6B6D]/10 flex items-center justify-center">
-                <ShoppingBag className="h-8 w-8 text-[#4A6B6D]/40" />
+              <div className="w-14 h-14 mx-auto mb-2 rounded-full bg-white/70 flex items-center justify-center shadow-sm">
+                <ShoppingBag className="h-6 w-6 text-[#B8B2A3]" />
               </div>
-              <p className="text-xs text-[#8A9283] capitalize">{product.category}</p>
+              <p className="text-xs font-medium text-[#B8B2A3] capitalize">{product.category}</p>
+              <p className="text-[10px] text-[#C4BEB0] mt-0.5">Image coming soon</p>
             </div>
           </div>
         )}
 
-        {/* Category badge */}
-        <span className="absolute top-3 left-3 px-3 py-1 text-xs font-medium bg-white/90 backdrop-blur-sm rounded-full text-[#4A6B6D] capitalize shadow-sm">
-          {product.category}
-        </span>
+        {/* Category badge — only show on image if image exists */}
+        {product.imageUrl && (
+          <span className="absolute top-3 left-3 px-3 py-1 text-xs font-medium bg-white/90 backdrop-blur-sm rounded-full text-[#4A6B6D] capitalize shadow-sm">
+            {product.category}
+          </span>
+        )}
 
         {/* Wishlist heart */}
         <button
@@ -203,6 +206,12 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
 
       {/* Info */}
       <div className="p-4 sm:p-5">
+        {/* Category badge below image when no image */}
+        {!product.imageUrl && (
+          <span className="inline-flex mb-2 px-2.5 py-0.5 text-[11px] font-medium bg-[#4A6B6D]/10 text-[#4A6B6D] rounded-full capitalize">
+            {product.category}
+          </span>
+        )}
         <h3
           className="text-lg font-semibold text-[#2C2C2C] mb-1 group-hover:text-[#4A6B6D] transition-colors"
           style={{ fontFamily: "'Playfair Display', Georgia, serif" }}

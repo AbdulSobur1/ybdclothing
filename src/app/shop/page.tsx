@@ -46,36 +46,37 @@ export default async function ShopPage() {
           Home
         </a>
 
-        {/* Page header */}
-        <div className="text-center mb-12">
-          <p className="text-xs text-[#A6822E] font-semibold tracking-wider uppercase mb-2">
-            Collection
-          </p>
-          <h1
-            className="text-3xl sm:text-4xl font-bold text-[#2C2C2C] mb-3"
-            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-          >
-            All Products
-          </h1>
-          <p className="text-[#8A9283] max-w-md mx-auto">
-            Premium streetwear crafted for those who make a statement.
-          </p>
-        </div>
-
-        {/* Quick links */}
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <a
-            href="/orders"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#E0D8C8] text-sm font-medium text-[#5A5A4A] hover:border-[#4A6B6D] hover:text-[#4A6B6D] transition-all shadow-sm"
-          >
-            My Orders
-          </a>
-          <a
-            href="/checkout"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#4A6B6D] text-white text-sm font-medium hover:bg-[#3A5557] transition-all shadow-sm"
-          >
-            View Cart
-          </a>
+        {/* Page header — compact */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <p className="text-[11px] text-[#A6822E] font-semibold tracking-wider uppercase mb-1">
+              Collection
+            </p>
+            <h1
+              className="text-2xl sm:text-3xl font-bold text-[#2C2C2C]"
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+            >
+              All Products
+            </h1>
+            <p className="text-sm text-[#8A9283] mt-1">
+              Premium streetwear crafted for those who make a statement.
+            </p>
+          </div>
+          {/* Utility links — secondary, moved to top-right */}
+          <div className="flex items-center gap-2">
+            <a
+              href="/orders"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#E0D8C8] text-xs font-medium text-[#8A9283] hover:text-[#4A6B6D] hover:border-[#4A6B6D] transition-all"
+            >
+              My Orders
+            </a>
+            <a
+              href="/checkout"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4A6B6D] text-white text-xs font-medium hover:bg-[#3A5557] transition-all shadow-sm"
+            >
+              View Cart
+            </a>
+          </div>
         </div>
 
         <StorefrontClient products={productList} />
