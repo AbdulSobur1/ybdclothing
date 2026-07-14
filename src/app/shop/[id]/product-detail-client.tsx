@@ -1,12 +1,19 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
-import { ShoppingBag, Check, Loader2, Heart, Clock } from "lucide-react";
-import { useState, useEffect } from "react";
-import type { ProductWithVariants } from "@/types/product";
+import {
+  ShoppingBag,
+  Check,
+  Loader2,
+  Heart,
+  Clock,
+  Package,
+} from "lucide-react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import type { ProductWithVariants } from "@/types/product";
 
 // Map color names to hex values for swatches
 const COLOR_MAP: Record<string, string> = {
@@ -34,19 +41,23 @@ function getHexColor(color: string): string {
   return COLOR_MAP[color.toLowerCase()] ?? "#888888";
 }
 
-interface ProductCardProps {
-  product: ProductWithVariants;
-  onCartUpdated: () => void;
+function getStockStatus(quantity: number): { label: string; color: string } {
+  if (quantity <= 0) return { label: "Sold Out", color: "text-red-500 bg-red-50" };
+  if (quantity <= 5) return { label: "Low Stock", color: "text-amber-600 bg-amber-50" };
+  return { label: "In Stock", color: "text-emerald-600 bg-emerald-50" };
 }
 
-export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
+interface ProductDetailClientProps {
+  product: ProductWithVariants;
+}
+
+export function ProductDetailClient({ product }: ProductDetailClientProps) {
+  const router = useRouter();
   const supabase = createClient();
 
-  // Extract unique colors and sizes from variants
   const colors = [...new Set(product.variants.map((v) => v.color).filter(Boolean))] as string[];
   const sizes = [...new Set(product.variants.map((v) => v.size).filter(Boolean))] as string[];
 
-  // State for selected variant attributes
   const [selectedColor, setSelectedColor] = useState<string | null>(
     colors.length > 0 ? colors[0] : null,
   );
@@ -54,79 +65,40 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
     sizes.length > 0 ? sizes[0] : null,
   );
 
-  // Find the matching variant ID based on selected color and size
   const findMatchingVariant = () => {
     if (!product.hasVariants) {
       return product.variants[0]?.id ?? null;
     }
-
     if (selectedColor && selectedSize) {
       const match = product.variants.find(
         (v) => v.color === selectedColor && v.size === selectedSize,
       );
       if (match) return match.id;
     }
-
     if (selectedColor) {
       const match = product.variants.find((v) => v.color === selectedColor);
       if (match) return match.id;
     }
-
     return product.variants[0]?.id ?? null;
   };
 
   const selectedVariantId = findMatchingVariant();
   const selectedV = product.variants.find((v) => v.id === selectedVariantId);
-  const isSoldOut = selectedV ? selectedV.stockQuantity <= 0 : false;
+  const stockQty = selectedV?.stockQuantity ?? 0;
+  const isSoldOut = stockQty <= 0;
+  const stockStatus = getStockStatus(stockQty);
 
+  // Cart state
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
-  const [wishlisted, setWishlisted] = useState(false);
-  const [wishlistLoading, setWishlistLoading] = useState(false);
+
+  // Waitlist state
   const [waitlisting, setWaitlisting] = useState(false);
   const [waitlisted, setWaitlisted] = useState(false);
 
-  // Check wishlist status on mount
-  useEffect(() => {
-    const checkWishlist = async () => {
-      try {
-        const res = await fetch("/api/wishlist");
-        if (res.ok) {
-          const data = await res.json();
-          const isWishlisted = data.items?.some((i: any) => i.productId === product.id);
-          setWishlisted(isWishlisted);
-        }
-      } catch {}
-    };
-    checkWishlist();
-  }, [product.id]);
-
-  const handleAddToWaitlist = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      window.location.href = "/auth/login?redirect=/shop";
-      return;
-    }
-
-    setWaitlisting(true);
-    try {
-      const res = await fetch("/api/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId: product.id,
-          variantId: selectedVariantId,
-        }),
-      });
-
-      if (res.ok) {
-        setWaitlisted(true);
-        setTimeout(() => setWaitlisted(false), 3000);
-      }
-    } finally {
-      setWaitlisting(false);
-    }
-  };
+  // Wishlist state
+  const [wishlisted, setWishlisted] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
 
   const handleAddToCart = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -146,14 +118,38 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
           quantity: 1,
         }),
       });
-
       if (res.ok) {
         setAdded(true);
-        onCartUpdated();
         setTimeout(() => setAdded(false), 2000);
       }
     } finally {
       setAdding(false);
+    }
+  };
+
+  const handleAddToWaitlist = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      window.location.href = "/auth/login?redirect=/shop";
+      return;
+    }
+
+    setWaitlisting(true);
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: product.id,
+          variantId: selectedVariantId,
+        }),
+      });
+      if (res.ok) {
+        setWaitlisted(true);
+        setTimeout(() => setWaitlisted(false), 3000);
+      }
+    } finally {
+      setWaitlisting(false);
     }
   };
 
@@ -180,106 +176,98 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
   };
 
   return (
-    <div className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-[#E0D8C8]/50 hover:-translate-y-1">
-      {/* Image — clickable to detail page */}
-      <Link href={`/shop/${product.id}`} className="block relative aspect-square bg-[#E8E2D4] overflow-hidden">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+      {/* ── Image ── */}
+      <div className="relative aspect-square bg-[#E8E2D4] rounded-2xl overflow-hidden shadow-lg">
         {product.imageUrl ? (
           <Image
             src={product.imageUrl}
             alt={product.name}
             fill
-            className="object-cover group-hover:scale-110 transition-transform duration-500"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover"
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            priority
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#E8E2D4] to-[#DDD6C8]">
             <div className="text-center">
-              <div className="w-14 h-14 mx-auto mb-2 rounded-full bg-white/70 flex items-center justify-center shadow-sm">
-                <ShoppingBag className="h-6 w-6 text-[#B8B2A3]" />
+              <div className="w-20 h-20 mx-auto mb-3 rounded-full bg-white/70 flex items-center justify-center shadow-md">
+                <Package className="h-10 w-10 text-[#B8B2A3]" />
               </div>
-              <p className="text-xs font-medium text-[#B8B2A3] capitalize">{product.category}</p>
-              <p className="text-[10px] text-[#C4BEB0] mt-0.5">Image coming soon</p>
+              <p className="text-sm font-medium text-[#B8B2A3] capitalize">{product.category}</p>
+              <p className="text-xs text-[#C4BEB0] mt-1">Image coming soon</p>
             </div>
           </div>
         )}
 
-        {/* Category badge — only show on image if image exists */}
-        {product.imageUrl && (
-          <span className="absolute top-3 left-3 px-3 py-1 text-xs font-medium bg-white/90 backdrop-blur-sm rounded-full text-[#4A6B6D] capitalize shadow-sm">
-            {product.category}
-          </span>
-        )}
-
         {/* Wishlist heart */}
         <button
-          onClick={(e) => { e.preventDefault(); handleWishlist(); }}
+          onClick={handleWishlist}
           disabled={wishlistLoading}
-          className={`absolute top-3 right-3 p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-sm transition-all ${
-            wishlisted ? "hover:bg-rose-50" : "hover:bg-rose-50 opacity-0 group-hover:opacity-100"
-          }`}
+          className="absolute top-4 right-4 p-2.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm hover:bg-rose-50 transition-all"
           title={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
         >
           {wishlistLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin text-rose-500" />
+            <Loader2 className="h-5 w-5 animate-spin text-rose-500" />
           ) : (
             <Heart
-              className={`h-4 w-4 transition-colors ${
+              className={`h-5 w-5 transition-colors ${
                 wishlisted ? "text-rose-500 fill-rose-500" : "text-[#8A9283] hover:text-rose-400"
               }`}
             />
           )}
         </button>
+      </div>
 
-        {/* Quick-add overlay on hover */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
-      </Link>
+      {/* ── Product Info ── */}
+      <div className="flex flex-col justify-center">
+        {/* Category */}
+        <span className="inline-flex self-start mb-3 px-3 py-1 text-xs font-medium bg-[#4A6B6D]/10 text-[#4A6B6D] rounded-full capitalize">
+          {product.category}
+        </span>
 
-      {/* Info */}
-      <div className="p-4 sm:p-5">
-        {/* Category badge below image when no image */}
-        {!product.imageUrl && (
-          <span className="inline-flex mb-2 px-2.5 py-0.5 text-[11px] font-medium bg-[#4A6B6D]/10 text-[#4A6B6D] rounded-full capitalize">
-            {product.category}
-          </span>
-        )}
-        <Link
-          href={`/shop/${product.id}`}
-          className="block"
+        {/* Name */}
+        <h1
+          className="text-3xl sm:text-4xl font-bold text-[#2C2C2C] mb-4"
+          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
         >
-          <h3
-            className="text-lg font-semibold text-[#2C2C2C] mb-1 group-hover:text-[#4A6B6D] transition-colors"
-            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-          >
-            {product.name}
-          </h3>
-        </Link>
-
-        <p className="text-sm text-[#8A9283] mb-3 line-clamp-2">
-          {product.description}
-        </p>
+          {product.name}
+        </h1>
 
         {/* Price */}
-        <p className="text-xl font-bold text-[#4A6B6D] mb-3">
+        <p className="text-2xl font-bold text-[#4A6B6D] mb-6">
           {formatPrice(product.basePrice)}
         </p>
 
-        {/* Variant selectors */}
+        {/* Description — full, no truncation */}
+        {product.description && (
+          <div className="mb-6">
+            <h2 className="text-sm font-semibold text-[#5A5A4A] uppercase tracking-wider mb-2">
+              Description
+            </h2>
+            <p className="text-[#5A5A4A] leading-relaxed whitespace-pre-line">
+              {product.description}
+            </p>
+          </div>
+        )}
+
+        {/* Variant Selectors */}
         {product.hasVariants && (
-          <div className="space-y-2 mb-3">
-            {/* Color selector with swatches */}
+          <div className="space-y-4 mb-6">
+            {/* Color selector */}
             {colors.length > 0 && (
               <div>
-                <p className="text-xs text-[#8A9283] mb-1.5">
-                  Color: <span className="text-[#2C2C2C] font-medium">{selectedColor}</span>
+                <p className="text-sm font-medium text-[#5A5A4A] mb-2">
+                  Color: <span className="text-[#2C2C2C]">{selectedColor}</span>
                 </p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-3">
                   {colors.map((color) => (
                     <button
                       key={color}
                       onClick={() => setSelectedColor(color)}
-                      className={`w-7 h-7 rounded-full border-2 transition-all duration-200 ${
+                      className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
                         selectedColor === color
-                          ? "border-[#4A6B6D] scale-110 shadow-md"
+                          ? "border-[#4A6B6D] scale-110 shadow-md ring-2 ring-[#4A6B6D]/20"
                           : "border-[#D4CFC2] hover:scale-110"
                       }`}
                       style={{ backgroundColor: getHexColor(color) }}
@@ -294,15 +282,15 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
             {/* Size selector */}
             {sizes.length > 0 && (
               <div>
-                <p className="text-xs text-[#8A9283] mb-1.5">
-                  Size: <span className="text-[#2C2C2C] font-medium">{selectedSize}</span>
+                <p className="text-sm font-medium text-[#5A5A4A] mb-2">
+                  Size: <span className="text-[#2C2C2C]">{selectedSize}</span>
                 </p>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   {sizes.map((size) => (
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
-                      className={`w-9 h-9 flex items-center justify-center text-xs rounded-lg border-2 transition-all duration-200 font-medium ${
+                      className={`w-10 h-10 flex items-center justify-center text-sm rounded-lg border-2 transition-all duration-200 font-medium ${
                         selectedSize === size
                           ? "bg-[#4A6B6D] text-white border-[#4A6B6D] shadow-sm"
                           : "border-[#D4CFC2] text-[#5A5A4A] hover:border-[#4A6B6D] hover:text-[#4A6B6D]"
@@ -317,13 +305,21 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
           </div>
         )}
 
-        {/* Action buttons */}
-        <div className="flex flex-col gap-2">
-          {/* Add to cart button */}
+        {/* Stock Status */}
+        <div className="mb-6">
+          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${stockStatus.color}`}>
+            <Package className="h-4 w-4" />
+            {stockStatus.label} {stockQty > 0 && `(Qty: ${stockQty})`}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-8">
+          {/* Add to Cart */}
           <button
             onClick={handleAddToCart}
             disabled={adding || isSoldOut}
-            className={`w-full py-2.5 rounded-full text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+            className={`flex-1 py-3 px-6 rounded-full text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
               isSoldOut
                 ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                 : added
@@ -337,7 +333,7 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : added ? (
               <>
-                <Check className="h-4 w-4" /> Added
+                <Check className="h-4 w-4" /> Added!
               </>
             ) : (
               <>
@@ -346,28 +342,35 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
             )}
           </button>
 
-          {/* Add to waitlist button */}
+          {/* Add to Waitlist */}
           <button
             onClick={handleAddToWaitlist}
             disabled={waitlisting}
-            className={`w-full py-2 rounded-full text-xs font-medium transition-all duration-200 flex items-center justify-center gap-1.5 border ${
+            className={`flex-1 py-3 px-6 rounded-full text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 border ${
               waitlisted
                 ? "bg-emerald-50 border-emerald-300 text-emerald-700"
                 : "border-[#A6822E] text-[#A6822E] hover:bg-[#A6822E]/5 active:scale-[0.97]"
             }`}
           >
             {waitlisting ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : waitlisted ? (
               <>
-                <Check className="h-3.5 w-3.5" /> You&apos;re on the list ✓
+                <Check className="h-4 w-4" /> You&apos;re on the list ✓
               </>
             ) : (
               <>
-                <Clock className="h-3.5 w-3.5" /> Add to Waitlist
+                <Clock className="h-4 w-4" /> Add to Waitlist
               </>
             )}
           </button>
+        </div>
+
+        {/* Payment reminder */}
+        <div className="bg-white rounded-xl p-4 border border-[#E0D8C8]">
+          <p className="text-xs text-[#8A9283]">
+            Complete your purchase via bank transfer. After ordering, upload your payment receipt for verification.
+          </p>
         </div>
       </div>
     </div>

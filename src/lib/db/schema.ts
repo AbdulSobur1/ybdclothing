@@ -6,6 +6,7 @@ import {
   serial,
   text,
   timestamp,
+  unique,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -110,7 +111,26 @@ export const wishlistItems = pgTable("wishlist_items", {
 });
 
 // ──────────────────────────────────────────────
-// Store Settings (persisted admin configuration)
+// Waitlist Entries
+// ──────────────────────────────────────────────
+
+export const waitlistEntries = pgTable("waitlist_entries", {
+  id: serial("id").primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => authUsers.id, { onDelete: "cascade" }),
+  productId: integer("product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  variantId: integer("variant_id").references(() => productVariants.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  // Prevent duplicate waitlist entries for same user + product + variant
+  uniqueUserProductVariant: unique().on(table.userId, table.productId, table.variantId),
+}));
+
 // ──────────────────────────────────────────────
 
 export const storeSettings = pgTable("store_settings", {

@@ -105,7 +105,22 @@ CREATE POLICY "Service role can read all receipts"
     AND auth.role() = 'service_role'
   );
 
--- 6. Wishlist Items
+-- 6. Waitlist Entries
+ALTER TABLE waitlist_entries ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read own waitlist"
+  ON waitlist_entries FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can add to own waitlist"
+  ON waitlist_entries FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can remove from own waitlist"
+  ON waitlist_entries FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- 7. Wishlist Items
 ALTER TABLE wishlist_items ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can read own wishlist"
@@ -120,21 +135,21 @@ CREATE POLICY "Users can remove from own wishlist"
   ON wishlist_items FOR DELETE
   USING (auth.uid() = user_id);
 
--- 7. Products (public read-only)
+-- 8. Products (public read-only)
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Anyone can read products"
   ON products FOR SELECT
   USING (true);
 
--- 8. Product variants (public read-only)
+-- 9. Product variants (public read-only)
 ALTER TABLE product_variants ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Anyone can read product variants"
   ON product_variants FOR SELECT
   USING (true);
 
--- 9. Delivery zones (public read-only)
+-- 10. Delivery zones (public read-only)
 ALTER TABLE delivery_zones ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Anyone can read delivery zones"
