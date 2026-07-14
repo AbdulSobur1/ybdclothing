@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   description:
     "Premium caps, tees, and hats for those who dare to stand out. Bold designs, quality craftsmanship — made in Nigeria.",
   keywords: ["streetwear", "Nigerian fashion", "caps", "tees", "YBD Clothing"],
+  icons: {
+    icon: "/icon.svg",
+  },
   openGraph: {
     title: "YBD Clothing — Nigerian Streetwear",
     description: "Premium streetwear for those who dare to stand out.",
