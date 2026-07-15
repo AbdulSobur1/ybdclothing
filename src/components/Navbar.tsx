@@ -95,13 +95,12 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 bg-[#F2EDE1]/95 backdrop-blur-md border-b border-[#E0D8C8]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo — replace public/logo.svg with your actual logo file */}
           <Link
             href="/"
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
             <img
-              src="/logo.svg"
+              src="/logo.png"
               alt="YBD Clothing"
               className="h-8 w-auto"
               style={{ maxHeight: "32px" }}

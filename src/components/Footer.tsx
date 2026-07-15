@@ -41,16 +41,10 @@ export function Footer() {
     <footer className="bg-[#2C3E3F] text-[#D4CFC2] mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand — replace public/logo.svg with your actual logo file */}
           <div className="md:col-span-1">
             <Link href="/" className="inline-block mb-3">
-              {/* 
-                Replace public/logo.svg with your actual logo file.
-                For the dark footer background, you'll want a light/white variant 
-                named public/logo-white.svg — then change src to "/logo-white.svg".
-              */}
               <img
-                src="/logo.svg"
+                src="/logo.png"
                 alt="YBD Clothing"
                 className="h-8 w-auto opacity-90 hover:opacity-100 transition-opacity"
                 style={{ maxHeight: "32px" }}
