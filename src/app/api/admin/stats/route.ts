@@ -38,7 +38,7 @@ export async function GET() {
       total: sql<number>`coalesce(sum(${orders.total}), 0)`,
     })
     .from(orders)
-    .where(sql`${orders.status} IN ('confirmed', 'completed', 'shipped')`);
+    .where(sql`${orders.status}::text IN ('confirmed', 'completed', 'shipped')`);
 
   const [totalProductsResult] = await db
     .select({ count: sql<number>`count(*)` })
@@ -92,7 +92,7 @@ export async function GET() {
       revenue: sql<number>`coalesce(sum(${orders.total}), 0)`,
     })
     .from(orders)
-    .where(sql`${orders.createdAt} >= ${sixMonthsAgo}`)
+    .where(sql`${orders.createdAt}::date >= ${sixMonthsAgo.toISOString().split('T')[0]}::date`)
     .groupBy(sql`to_char(${orders.createdAt}, 'Mon')`, sql`to_char(${orders.createdAt}, 'YYYY')`)
     .orderBy(sql`min(${orders.createdAt})`);
 
