@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center px-4">
+    <div className="fixed inset-0 bg-[#1a1a2e] flex items-center justify-center px-4 z-50">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
