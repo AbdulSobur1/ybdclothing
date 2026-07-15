@@ -42,14 +42,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const prevPendingCountRef = useRef(0);
 
-  // Login page renders bare (no sidebar, no auth check)
-  if (pathname === "/admin/login") {
-    return <>{children}</>;
-  }
-
   useEffect(() => {
+    if (pathname === "/admin/login") return;
     checkAdmin();
-  }, []);
+  }, [pathname]);
 
   async function checkAdmin() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -121,6 +117,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     await supabase.auth.signOut();
     router.push("/admin/login");
   };
+
+  // Login page renders bare (no sidebar, no auth UI)
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
 
   if (checking) {
     return (

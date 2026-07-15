@@ -79,26 +79,32 @@ export default function AdminLoginPage() {
         <div className="bg-[#16213e] rounded-xl border border-white/10 p-8">
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label className="block text-xs text-gray-400 mb-1.5">Email</label>
+              <label htmlFor="admin-email" className="block text-xs text-gray-400 mb-1.5">Email</label>
               <input
+                id="admin-email"
+                name="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                autoComplete="email"
                 className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-[#A6822E] transition-all"
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
-              <label className="block text-xs text-gray-400 mb-1.5">Password</label>
+              <label htmlFor="admin-password" className="block text-xs text-gray-400 mb-1.5">Password</label>
               <div className="relative">
                 <input
+                  id="admin-password"
+                  name="password"
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={6}
+                  autoComplete="current-password"
                   className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-[#A6822E] transition-all pr-10"
                   placeholder="Your password"
                 />

@@ -192,39 +192,41 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
   return (
     <div className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-[#E0D8C8]/50 hover:-translate-y-1">
       {/* Image — clickable to detail page */}
-      <Link href={`/shop/${product.id}`} className="block relative aspect-square bg-[#E8E2D4] overflow-hidden">
-        {product.imageUrl ? (
-          <Image
-            src={product.imageUrl}
-            alt={product.name}
-            fill
-            className="object-cover group-hover:scale-110 transition-transform duration-500"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#E8E2D4] to-[#DDD6C8]">
-            <div className="text-center">
-              <div className="w-14 h-14 mx-auto mb-2 rounded-full bg-white/70 flex items-center justify-center shadow-sm">
-                <ShoppingBag className="h-6 w-6 text-[#B8B2A3]" />
+      <div className="relative aspect-square bg-[#E8E2D4] overflow-hidden">
+        <Link href={`/shop/${product.id}`} className="block w-full h-full">
+          {product.imageUrl ? (
+            <Image
+              src={product.imageUrl}
+              alt={product.name}
+              fill
+              className="object-cover group-hover:scale-110 transition-transform duration-500"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#E8E2D4] to-[#DDD6C8]">
+              <div className="text-center">
+                <div className="w-14 h-14 mx-auto mb-2 rounded-full bg-white/70 flex items-center justify-center shadow-sm">
+                  <ShoppingBag className="h-6 w-6 text-[#B8B2A3]" />
+                </div>
+                <p className="text-xs font-medium text-[#B8B2A3] capitalize">{product.category}</p>
+                <p className="text-[10px] text-[#C4BEB0] mt-0.5">Image coming soon</p>
               </div>
-              <p className="text-xs font-medium text-[#B8B2A3] capitalize">{product.category}</p>
-              <p className="text-[10px] text-[#C4BEB0] mt-0.5">Image coming soon</p>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Category badge — only show on image if image exists */}
-        {product.imageUrl && (
-          <span className="absolute top-3 left-3 px-3 py-1 text-xs font-medium bg-white/90 backdrop-blur-sm rounded-full text-[#4A6B6D] capitalize shadow-sm">
-            {product.category}
-          </span>
-        )}
+          {/* Category badge — only show on image if image exists */}
+          {product.imageUrl && (
+            <span className="absolute top-3 left-3 px-3 py-1 text-xs font-medium bg-white/90 backdrop-blur-sm rounded-full text-[#4A6B6D] capitalize shadow-sm">
+              {product.category}
+            </span>
+          )}
+        </Link>
 
-        {/* Wishlist heart */}
+        {/* Wishlist heart — positioned inside the container but OUTSIDE the Link */}
         <button
-          onClick={(e) => { e.preventDefault(); handleWishlist(); }}
+          onClick={handleWishlist}
           disabled={wishlistLoading}
-          className={`absolute top-3 right-3 p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-sm transition-all ${
+          className={`absolute top-3 right-3 p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-sm transition-all z-10 ${
             wishlisted ? "hover:bg-rose-50" : "hover:bg-rose-50 opacity-0 group-hover:opacity-100"
           }`}
           title={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
@@ -241,8 +243,8 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
         </button>
 
         {/* Quick-add overlay on hover */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
-      </Link>
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300 pointer-events-none" />
+      </div>
 
       {/* Info */}
       <div className="p-4 sm:p-5">
