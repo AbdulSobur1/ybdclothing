@@ -1,16 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { withErrorHandling, requireContentType } from "@/lib/api-helpers";
 
 /**
  * POST /api/profile — Create a profile record after signup.
- *
- * Two modes:
- * 1. Authenticated user (via session cookie) — uses anon key + RLS
- * 2. Explicit userId provided — uses service-role key (bypasses RLS)
- *    This is the fallback for signups where email confirmation is enabled
- *    and the user doesn't have a session yet.
  */
-export async function POST(request: Request) {
+export const POST = withErrorHandling(async function (request: Request) {
+  const contentTypeError = requireContentType(request);
+  if (contentTypeError) return contentTypeError;
   const body = await request.json();
   const { fullName, email, phone, defaultAddress, userId } = body;
 
@@ -61,4 +58,4 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ error: "Not authenticated and no userId provided" }, { status: 401 });
-}
+});

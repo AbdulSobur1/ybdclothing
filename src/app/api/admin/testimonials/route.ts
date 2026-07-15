@@ -4,11 +4,12 @@ import { db } from "@/lib/db";
 import { testimonials } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { checkAdmin } from "@/lib/admin";
+import { withErrorHandling, validatePositiveInteger, requireContentType } from "@/lib/api-helpers";
 
 /**
  * GET /api/admin/testimonials — List all testimonials.
  */
-export async function GET() {
+export const GET = withErrorHandling(async function () {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -20,12 +21,14 @@ export async function GET() {
     .orderBy(desc(testimonials.createdAt));
 
   return NextResponse.json({ testimonials: all });
-}
+});
 
 /**
  * POST /api/admin/testimonials — Create a new testimonial.
  */
-export async function POST(request: Request) {
+export const POST = withErrorHandling(async function (request: Request) {
+  const contentTypeError = requireContentType(request);
+  if (contentTypeError) return contentTypeError;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -50,12 +53,14 @@ export async function POST(request: Request) {
     .returning();
 
   return NextResponse.json({ testimonial: created }, { status: 201 });
-}
+});
 
 /**
  * PUT /api/admin/testimonials — Update a testimonial.
  */
-export async function PUT(request: Request) {
+export const PUT = withErrorHandling(async function (request: Request) {
+  const contentTypeError = requireContentType(request);
+  if (contentTypeError) return contentTypeError;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -78,12 +83,14 @@ export async function PUT(request: Request) {
     .where(eq(testimonials.id, id));
 
   return NextResponse.json({ success: true });
-}
+});
 
 /**
  * DELETE /api/admin/testimonials — Delete a testimonial.
  */
-export async function DELETE(request: Request) {
+export const DELETE = withErrorHandling(async function (request: Request) {
+  const contentTypeError = requireContentType(request);
+  if (contentTypeError) return contentTypeError;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -91,8 +98,9 @@ export async function DELETE(request: Request) {
 
   const body = await request.json();
   const { id } = body;
-  if (!id) return NextResponse.json({ error: "ID is required" }, { status: 400 });
+  const idError = validatePositiveInteger(id, "Testimonial ID");
+  if (idError) return NextResponse.json({ error: idError }, { status: 400 });
 
   await db.delete(testimonials).where(eq(testimonials.id, id));
   return NextResponse.json({ success: true });
-}
+});

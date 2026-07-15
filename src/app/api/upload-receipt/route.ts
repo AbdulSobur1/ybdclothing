@@ -4,15 +4,12 @@ import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { config } from "@/lib/config";
 import { eq } from "drizzle-orm";
+import { withErrorHandling } from "@/lib/api-helpers";
 
 /**
  * POST /api/upload-receipt — Upload a payment receipt for an order.
- *
- * Security:
- * - Only the order owner can upload a receipt
- * - File type and size are validated server-side
  */
-export async function POST(request: Request) {
+export const POST = withErrorHandling(async function (request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -91,4 +88,4 @@ export async function POST(request: Request) {
     receiptUrl,
     message: "Receipt uploaded successfully. Your order is pending verification.",
   });
-}
+});

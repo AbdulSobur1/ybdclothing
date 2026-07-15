@@ -4,11 +4,12 @@ import { db } from "@/lib/db";
 import { deliveryZones } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { checkAdmin } from "@/lib/admin";
+import { withErrorHandling, validatePositiveInteger, requireContentType } from "@/lib/api-helpers";
 
 /**
  * GET /api/admin/delivery-zones — List all delivery zones.
  */
-export async function GET() {
+export const GET = withErrorHandling(async function () {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -20,12 +21,14 @@ export async function GET() {
     .orderBy(deliveryZones.zoneName);
 
   return NextResponse.json({ zones });
-}
+});
 
 /**
  * POST /api/admin/delivery-zones — Create a new delivery zone.
  */
-export async function POST(request: Request) {
+export const POST = withErrorHandling(async function (request: Request) {
+  const contentTypeError = requireContentType(request);
+  if (contentTypeError) return contentTypeError;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -44,12 +47,14 @@ export async function POST(request: Request) {
     .returning();
 
   return NextResponse.json({ zone }, { status: 201 });
-}
+});
 
 /**
  * PUT /api/admin/delivery-zones — Update a delivery zone.
  */
-export async function PUT(request: Request) {
+export const PUT = withErrorHandling(async function (request: Request) {
+  const contentTypeError = requireContentType(request);
+  if (contentTypeError) return contentTypeError;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -58,8 +63,9 @@ export async function PUT(request: Request) {
   const body = await request.json();
   const { id, zoneName, fee, active } = body;
 
-  if (!id) {
-    return NextResponse.json({ error: "Zone ID is required" }, { status: 400 });
+  const idError = validatePositiveInteger(id, "Zone ID");
+  if (idError) {
+    return NextResponse.json({ error: idError }, { status: 400 });
   }
 
   await db
@@ -72,4 +78,4 @@ export async function PUT(request: Request) {
     .where(eq(deliveryZones.id, id));
 
   return NextResponse.json({ success: true });
-}
+});

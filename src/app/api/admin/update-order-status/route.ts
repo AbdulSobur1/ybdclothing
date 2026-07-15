@@ -5,6 +5,7 @@ import { orders } from "@/lib/db/schema";
 import { sendOrderStatusUpdate } from "@/lib/email";
 import { eq } from "drizzle-orm";
 import { checkAdmin } from "@/lib/admin";
+import { withErrorHandling, validatePositiveInteger, requireContentType } from "@/lib/api-helpers";
 
 /**
  * POST /api/admin/update-order-status
@@ -12,7 +13,9 @@ import { checkAdmin } from "@/lib/admin";
  * Security: only the store owner (identified by email) can update order status.
  * The status change is done server-side — the client never directly mutates status.
  */
-export async function POST(request: Request) {
+export const POST = withErrorHandling(async function (request: Request) {
+  const contentTypeError = requireContentType(request);
+  if (contentTypeError) return contentTypeError;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -27,7 +30,12 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { orderId, newStatus, customerEmail, customerName } = body;
 
-  if (!orderId || !newStatus) {
+  const idError = validatePositiveInteger(orderId, "Order ID");
+  if (idError) {
+    return NextResponse.json({ error: idError }, { status: 400 });
+  }
+
+  if (!newStatus) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
@@ -59,4 +67,4 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ success: true });
-}
+});

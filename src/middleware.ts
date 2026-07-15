@@ -39,7 +39,48 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return supabaseResponse;
+  // Add security headers to all responses
+  const response = supabaseResponse;
+  
+  // Prevent MIME type sniffing
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  
+  // Prevent clickjacking
+  response.headers.set("X-Frame-Options", "DENY");
+  
+  // Enable HSTS (HTTP Strict Transport Security)
+  response.headers.set(
+    "Strict-Transport-Security",
+    "max-age=31536000; includeSubDomains; preload",
+  );
+  
+  // Block requests from other sites (referrer policy)
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  
+  // Restrict API/feature permissions
+  response.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), payment=()",
+  );
+  
+  // Content Security Policy — prevents XSS and data injection
+  response.headers.set(
+    "Content-Security-Policy",
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "img-src 'self' data: blob: https: ",
+      "font-src 'self' https://fonts.gstatic.com",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://wa.me",
+      "frame-src 'none'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join("; "),
+  );
+
+  return response;
 }
 
 export const config = {

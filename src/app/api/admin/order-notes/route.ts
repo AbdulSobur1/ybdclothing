@@ -4,11 +4,12 @@ import { db } from "@/lib/db";
 import { orderNotes, profiles } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { checkAdmin } from "@/lib/admin";
+import { withErrorHandling, validatePositiveInteger, requireContentType } from "@/lib/api-helpers";
 
 /**
  * GET /api/admin/order-notes?orderId=N — List notes for an order.
  */
-export async function GET(request: Request) {
+export const GET = withErrorHandling(async function (request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -16,7 +17,8 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const orderId = parseInt(searchParams.get("orderId") ?? "", 10);
-  if (!orderId) return NextResponse.json({ error: "Order ID is required" }, { status: 400 });
+  const idError = validatePositiveInteger(orderId, "Order ID");
+  if (idError) return NextResponse.json({ error: idError }, { status: 400 });
 
   const notes = await db
     .select()
@@ -25,12 +27,14 @@ export async function GET(request: Request) {
     .orderBy(desc(orderNotes.createdAt));
 
   return NextResponse.json({ notes });
-}
+});
 
 /**
  * POST /api/admin/order-notes — Create a note on an order.
  */
-export async function POST(request: Request) {
+export const POST = withErrorHandling(async function (request: Request) {
+  const contentTypeError = requireContentType(request);
+  if (contentTypeError) return contentTypeError;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -39,8 +43,13 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { orderId, note } = body;
 
-  if (!orderId || !note) {
+  if (!orderId || !note || note.trim().length === 0) {
     return NextResponse.json({ error: "Order ID and note are required" }, { status: 400 });
+  }
+
+  const idError = validatePositiveInteger(orderId, "Order ID");
+  if (idError) {
+    return NextResponse.json({ error: idError }, { status: 400 });
   }
 
   const [created] = await db
@@ -53,4 +62,4 @@ export async function POST(request: Request) {
     .returning();
 
   return NextResponse.json({ note: created }, { status: 201 });
-}
+});

@@ -4,12 +4,13 @@ import { db } from "@/lib/db";
 import { orders, orderItems, profiles, deliveryZones } from "@/lib/db/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { checkAdmin } from "@/lib/admin";
+import { withErrorHandling } from "@/lib/api-helpers";
 
 /**
  * GET /api/admin/orders — List all orders with optional filters.
  * Query params: status, search (by order ID or customer name), page, limit, export=csv
  */
-export async function GET(request: Request) {
+export const GET = withErrorHandling(async function (request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -154,4 +155,4 @@ export async function GET(request: Request) {
       totalPages: Math.ceil(totalCount / limit),
     },
   });
-}
+});

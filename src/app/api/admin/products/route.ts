@@ -4,11 +4,12 @@ import { db } from "@/lib/db";
 import { products, productVariants } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { checkAdmin } from "@/lib/admin";
+import { withErrorHandling, validatePositiveInteger, requireContentType } from "@/lib/api-helpers";
 
 /**
  * GET /api/admin/products — List all products with variant info.
  */
-export async function GET() {
+export const GET = withErrorHandling(async function () {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -30,12 +31,15 @@ export async function GET() {
   );
 
   return NextResponse.json({ products: productsWithDetails });
-}
+});
 
 /**
  * POST /api/admin/products — Create a new product with variants.
  */
-export async function POST(request: Request) {
+export const POST = withErrorHandling(async function (request: Request) {
+  const contentTypeError = requireContentType(request);
+  if (contentTypeError) return contentTypeError;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -79,12 +83,15 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ product: newProduct }, { status: 201 });
-}
+});
 
 /**
  * PUT /api/admin/products — Update a product (requires id in body).
  */
-export async function PUT(request: Request) {
+export const PUT = withErrorHandling(async function (request: Request) {
+  const contentTypeError = requireContentType(request);
+  if (contentTypeError) return contentTypeError;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -93,8 +100,9 @@ export async function PUT(request: Request) {
   const body = await request.json();
   const { id, name, description, basePrice, category, hasVariants, imageUrl, active, variants } = body;
 
-  if (!id) {
-    return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
+  const idError = validatePositiveInteger(id, "Product ID");
+  if (idError) {
+    return NextResponse.json({ error: idError }, { status: 400 });
   }
 
   await db
@@ -126,12 +134,12 @@ export async function PUT(request: Request) {
   }
 
   return NextResponse.json({ success: true });
-}
+});
 
 /**
  * DELETE /api/admin/products — Delete a product (requires id in body).
  */
-export async function DELETE(request: Request) {
+export const DELETE = withErrorHandling(async function (request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -140,11 +148,15 @@ export async function DELETE(request: Request) {
   const body = await request.json();
   const { id } = body;
 
-  if (!id) {
-    return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
+  const contentTypeError = requireContentType(request);
+  if (contentTypeError) return contentTypeError;
+
+  const idError = validatePositiveInteger(id, "Product ID");
+  if (idError) {
+    return NextResponse.json({ error: idError }, { status: 400 });
   }
 
   await db.delete(products).where(eq(products.id, id));
 
   return NextResponse.json({ success: true });
-}
+});
