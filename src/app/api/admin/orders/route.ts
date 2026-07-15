@@ -112,7 +112,13 @@ export const GET = withErrorHandling(async function (request: Request) {
 
       return {
         ...order,
-        customer: customer ?? null,
+        // Map Drizzle camelCase to snake_case for the frontend
+        customer: customer
+          ? {
+              full_name: customer.fullName,
+              email: customer.email,
+            }
+          : null,
         zoneName,
         itemCount: Number(itemsResult?.count ?? 0),
       };
@@ -125,7 +131,7 @@ export const GET = withErrorHandling(async function (request: Request) {
       ...ordersWithDetails.map((o) =>
         [
           o.id,
-          `"${o.customer?.fullName ?? "Unknown"}"`,
+          `"${o.customer?.full_name ?? "Unknown"}"`,
           `"${o.customer?.email ?? ""}"`,
           o.status,
           o.itemCount,

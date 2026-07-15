@@ -103,7 +103,13 @@ export async function GET() {
         .from(profiles)
         .where(eq(profiles.id, order.userId))
         .limit(1);
-      return { ...order, customer: customer ?? null };
+      return {
+        ...order,
+        // Map Drizzle camelCase to snake_case for the frontend
+        customer: customer
+          ? { full_name: customer.fullName, email: customer.email }
+          : null,
+      };
     }),
   );
 
