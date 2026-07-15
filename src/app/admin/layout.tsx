@@ -165,15 +165,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           collapsed ? "w-16" : "w-64"
         } ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
       >
-        {/* Logo */}
+        {/* Logo — replace public/logo-icon.svg with your actual icon */}
         <div className="h-16 flex items-center px-4 border-b border-white/5">
           <Link
             href="/admin"
             className="flex items-center gap-3 min-w-0"
           >
-            <div className="w-8 h-8 rounded-lg bg-[#A6822E] flex items-center justify-center flex-shrink-0">
-              <Store className="h-4 w-4 text-white" />
-            </div>
+            <img
+              src="/logo-icon.svg"
+              alt="YBD"
+              className="w-8 h-8 rounded-lg flex-shrink-0"
+            />
             {!collapsed && (
               <span className="font-bold text-white truncate" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
                 YBD Admin

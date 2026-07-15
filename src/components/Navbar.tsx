@@ -95,13 +95,17 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 bg-[#F2EDE1]/95 backdrop-blur-md border-b border-[#E0D8C8]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
+          {/* Logo — replace public/logo.svg with your actual logo file */}
           <Link
             href="/"
-            className="text-2xl font-bold tracking-tight hover:opacity-80 transition-opacity"
-            style={{ fontFamily: "'Playfair Display', Georgia, serif", color: "#4A6B6D" }}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
-            YBD
+            <img
+              src="/logo.svg"
+              alt="YBD Clothing"
+              className="h-8 w-auto"
+              style={{ maxHeight: "32px" }}
+            />
           </Link>
 
           {/* Desktop nav */}
