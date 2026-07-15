@@ -1,33 +1,33 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { products, productVariants } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 import { StorefrontClient } from "@/components/StorefrontClient";
 
 // Page requires DB queries — render dynamically
 export const dynamic = "force-dynamic";
 
 async function getProducts() {
-  const allProducts = await db
+  // Single query: fetch all active products with their variants via left join
+  const rows = await db
     .select()
     .from(products)
+    .leftJoin(productVariants, eq(products.id, productVariants.productId))
     .where(eq(products.active, true))
-    .orderBy(products.createdAt);
+    .orderBy(asc(products.createdAt));
 
-  const productsWithVariants = await Promise.all(
-    allProducts.map(async (product) => {
-      const variants = product.hasVariants
-        ? await db
-            .select()
-            .from(productVariants)
-            .where(eq(productVariants.productId, product.id))
-        : [];
+  // Group variants by product
+  const productMap = new Map<number, typeof products.$inferSelect & { variants: typeof productVariants.$inferSelect[] }>();
+  for (const row of rows) {
+    if (!productMap.has(row.products.id)) {
+      productMap.set(row.products.id, { ...row.products, variants: [] });
+    }
+    if (row.product_variants) {
+      productMap.get(row.products.id)!.variants.push(row.product_variants);
+    }
+  }
 
-      return { ...product, variants };
-    }),
-  );
-
-  return productsWithVariants;
+  return Array.from(productMap.values());
 }
 
 export default async function ShopPage() {
