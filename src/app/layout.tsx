@@ -10,8 +10,8 @@ export const metadata: Metadata = {
     "Premium caps, tees, and jerseys for those who dare to stand out. Bold designs, quality craftsmanship — made in Nigeria.",
   keywords: ["streetwear", "Nigerian fashion", "caps", "tees", "YBD Clothing"],
   icons: {
-    icon: "/logo-icon.png",
-    apple: "/logo-icon.png",
+    icon: "/favicon.png",
+    apple: "/apple-touch-icon.png",
   },
   // OpenGraph image — place a 1200x630 PNG at /public/og-image.png for social sharing
   // openGraph: { images: [{ url: "/og-image.png", width: 1200, height: 630 }] },
