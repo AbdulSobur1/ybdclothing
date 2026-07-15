@@ -29,6 +29,13 @@
       "when": 1784060987064,
       "tag": "0003_noisy_silver_fox",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1784121181883,
+      "tag": "0004_wealthy_darkstar",
+      "breakpoints": true
     }
   ]
 }
