@@ -81,6 +81,7 @@ function CheckoutContent() {
       setCartItems(cartData.items ?? []);
       setDeliveryZones(zonesData.zones ?? []);
     } catch (err) {
+      console.error("Checkout load error:", err);
       setError("Failed to load checkout data.");
     } finally {
       setLoading(false);
@@ -155,7 +156,8 @@ function CheckoutContent() {
       const orderData = await orderRes.json();
 
       if (!orderRes.ok) {
-        setError(orderData.error ?? "Failed to place order");
+        console.error("Checkout error:", orderData.error);
+        setError("Failed to place order. Please try again.");
         setPlacing(false);
         return;
       }

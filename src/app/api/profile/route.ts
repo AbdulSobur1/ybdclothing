@@ -31,7 +31,7 @@ export const POST = withErrorHandling(async function (request: Request) {
 
       if (error) {
         console.error("Profile creation error (anon):", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: "Failed to create profile" }, { status: 500 });
       }
 
       return NextResponse.json({ success: true });
@@ -51,7 +51,7 @@ export const POST = withErrorHandling(async function (request: Request) {
 
     if (error) {
       console.error("Profile creation error (admin):", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: "Failed to create profile" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });

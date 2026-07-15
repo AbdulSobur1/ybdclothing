@@ -34,8 +34,9 @@ export function ReorderButton({ orderId }: ReorderButtonProps) {
           router.push("/checkout");
         }, 1200);
       } else {
+        console.error("Reorder error:", data.error);
         setStatus("error");
-        setMessage(data.error ?? "Failed to reorder");
+        setMessage("Failed to reorder. Please try again.");
         setTimeout(() => setStatus("idle"), 3000);
       }
     } catch {

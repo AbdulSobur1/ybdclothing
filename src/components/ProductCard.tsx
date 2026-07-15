@@ -186,10 +186,13 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
         const data = await res.json();
         setWishlisted(data.wishlisted);
       } else {
+        const data = await res.json().catch(() => ({}));
+        console.error("Wishlist API error:", data.error || res.statusText);
         setWishlistError(true);
         setTimeout(() => setWishlistError(false), 3000);
       }
-    } catch {
+    } catch (err) {
+      console.error("Wishlist fetch error:", err);
       setWishlistError(true);
       setTimeout(() => setWishlistError(false), 3000);
     } finally {

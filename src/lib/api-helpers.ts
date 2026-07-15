@@ -19,9 +19,8 @@ export function withErrorHandling(handler: ApiHandler): ApiHandler {
       return await handler(request, ...args);
     } catch (error) {
       console.error("API Error:", error);
-      const message = error instanceof Error ? error.message : "Internal server error";
       return NextResponse.json(
-        { error: message },
+        { error: "Something went wrong. Please try again." },
         { status: 500 },
       );
     }

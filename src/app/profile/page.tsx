@@ -77,7 +77,8 @@ export default function ProfilePage() {
       .eq("id", user.id);
 
     if (error) {
-      setMessage({ type: "error", text: error.message });
+      console.error("Profile update error:", error);
+      setMessage({ type: "error", text: "Failed to update profile. Please try again." });
     } else {
       setMessage({ type: "success", text: "Profile updated successfully!" });
     }
@@ -95,7 +96,8 @@ export default function ProfilePage() {
     });
 
     if (error) {
-      setMessage({ type: "error", text: error.message });
+      console.error("Password change error:", error);
+      setMessage({ type: "error", text: "Failed to change password. Please try again." });
     } else {
       setMessage({ type: "success", text: "Password changed successfully!" });
       setCurrentPassword("");

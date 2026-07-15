@@ -89,7 +89,8 @@ export default function AdminDashboard() {
         setData(await res.json());
       } else {
         const body = await res.json().catch(() => ({}));
-        setErrorMessage(body.error || `Server error (${res.status})`);
+        console.error("Dashboard stats error:", body.error);
+        setErrorMessage("Failed to load dashboard data. Please try again.");
       }
     } catch (err) {
       console.error("Failed to load stats:", err);

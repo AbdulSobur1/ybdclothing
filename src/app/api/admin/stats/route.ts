@@ -133,7 +133,6 @@ export async function GET() {
   });
   } catch (error) {
     console.error("Stats API error:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }
