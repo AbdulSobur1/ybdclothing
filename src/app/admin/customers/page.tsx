@@ -6,11 +6,11 @@ import { Users, Mail, Phone, Loader2, Search } from "lucide-react";
 
 interface Customer {
   id: string;
-  full_name: string;
+  fullName: string;
   email: string;
   phone: string | null;
-  default_address: string | null;
-  created_at: string;
+  defaultAddress: string | null;
+  createdAt: string;
   orderCount: number;
   totalSpent: number;
 }
@@ -43,7 +43,7 @@ export default function AdminCustomersPage() {
     if (!search) return true;
     const q = search.toLowerCase();
     return (
-      c.full_name.toLowerCase().includes(q) ||
+      c.fullName.toLowerCase().includes(q) ||
       c.email.toLowerCase().includes(q) ||
       (c.phone && c.phone.includes(search))
     );
@@ -92,11 +92,11 @@ export default function AdminCustomersPage() {
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-full bg-[#A6822E]/20 flex items-center justify-center">
                   <span className="text-sm font-bold text-[#A6822E]">
-                    {customer.full_name.charAt(0).toUpperCase()}
+                    {customer.fullName.charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-white truncate">{customer.full_name}</p>
+                  <p className="text-sm font-medium text-white truncate">{customer.fullName}</p>
                   <div className="flex items-center gap-1 text-xs text-gray-400">
                     <Mail className="h-3 w-3" />
                     <span className="truncate">{customer.email}</span>
@@ -123,7 +123,7 @@ export default function AdminCustomersPage() {
               )}
 
               <p className="text-xs text-gray-500 mt-2">
-                Joined {new Date(customer.created_at).toLocaleDateString("en-NG", {
+                Joined {new Date(customer.createdAt).toLocaleDateString("en-NG", {
                   year: "numeric",
                   month: "long",
                   day: "numeric",
