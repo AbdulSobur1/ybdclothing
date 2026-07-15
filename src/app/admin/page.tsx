@@ -73,6 +73,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [chartView, setChartView] = useState<"bar" | "line">("bar");
   const [refreshing, setRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadStats();
@@ -80,13 +81,19 @@ export default function AdminDashboard() {
 
   async function loadStats() {
     try {
+      setLoading(true);
       setRefreshing(true);
+      setErrorMessage(null);
       const res = await fetch("/api/admin/stats");
       if (res.ok) {
         setData(await res.json());
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setErrorMessage(body.error || `Server error (${res.status})`);
       }
     } catch (err) {
       console.error("Failed to load stats:", err);
+      setErrorMessage(err instanceof Error ? err.message : "Network error");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -137,8 +144,22 @@ export default function AdminDashboard() {
 
   if (!data) {
     return (
-      <div className="text-center py-20 text-gray-400">
-        Failed to load dashboard data.
+      <div className="text-center py-20">
+        <p className="text-gray-400 mb-2">Failed to load dashboard data.</p>
+        {errorMessage && (
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/20">
+            <p className="text-sm text-red-400 font-mono max-w-md break-all">{errorMessage}</p>
+          </div>
+        )}
+        <div className="mt-4">
+          <button
+            onClick={loadStats}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#A6822E] text-white text-sm font-medium hover:bg-[#8E6E1F] transition-all"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }

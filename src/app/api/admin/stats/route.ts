@@ -9,20 +9,21 @@ import { checkAdmin } from "@/lib/admin";
  * GET /api/admin/stats — Returns dashboard overview stats (admin only).
  */
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
+    if (!user) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
 
-  if (!await checkAdmin(user.id)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
+    if (!await checkAdmin(user.id)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
 
-  const [totalOrdersResult] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(orders);
+    const [totalOrdersResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(orders);
 
   const ordersByStatus = await db
     .select({
@@ -130,4 +131,9 @@ export async function GET() {
     lowStockCount,
     outOfStockCount,
   });
+  } catch (error) {
+    console.error("Stats API error:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
