@@ -3,6 +3,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { cartItems, productVariants, products } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
+import { checkAdmin } from "@/lib/admin";
 
 /**
  * GET /api/cart — Fetch the current user's cart items with product details.
@@ -48,6 +49,11 @@ export async function POST(request: Request) {
 
   if (!productId || quantity < 1) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  // Prevent admin from adding to cart
+  if (await checkAdmin(user.id)) {
+    return NextResponse.json({ error: "Admin accounts cannot place orders" }, { status: 403 });
   }
 
   // Check if the same item already exists in cart

@@ -358,12 +358,12 @@ export default function AdminProductsPage() {
                   )}
                 </div>
                 <div className="flex gap-1">
-                  <button
-                    onClick={() => openEditForm(product)}
-                    className="p-1.5 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all"
+                  <Link
+                    href={`/admin/products/${product.id}/edit`}
+                    className="p-1.5 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-all inline-flex"
                   >
                     <Pencil className="h-4 w-4" />
-                  </button>
+                  </Link>
                   <button
                     onClick={() => handleDelete(product.id)}
                     className="p-1.5 rounded-lg hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-all"

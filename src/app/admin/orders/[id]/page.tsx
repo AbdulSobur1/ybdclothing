@@ -1,14 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
-import { orders, orderItems, deliveryZones, profiles } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { orders, orderItems, orderNotes, deliveryZones, profiles } from "@/lib/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
 import { config } from "@/lib/config";
 import { OrderStatusBadge } from "@/components/OrderStatusBadge";
 import { OrderStatusUpdateForm } from "./status-form";
-import { ArrowLeft } from "lucide-react";
+import { NotesSection } from "./notes-section";
+import { ArrowLeft, Package, User, MapPin, ExternalLink } from "lucide-react";
 
 interface AdminOrderPageProps {
   params: Promise<{ id: string }>;
@@ -23,7 +24,6 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderPagePro
   const { data: { user } } = await supabase.auth.getUser();
 
   // Simple admin check — the owner email in config is considered admin.
-  // In production, use a proper admin role or Supabase custom claims.
   let isAdmin = false;
   let adminEmail = "";
   if (user) {
@@ -38,11 +38,15 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderPagePro
 
   if (!isAdmin) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[#F2EDE1] py-20">
-        <div className="text-center">
-          <p className="text-[#8A9283] text-lg">Unauthorized</p>
-          <p className="text-[#B8B2A3] text-sm mt-1">Only the store owner can access this page.</p>
-        </div>
+      <div className="text-center py-20">
+        <p className="text-gray-400 text-lg">Unauthorized</p>
+        <p className="text-gray-500 text-sm mt-1">Only the store owner can access this page.</p>
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-1 text-sm text-[#A6822E] hover:text-[#C4A85D] mt-4 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+        </Link>
       </div>
     );
   }
@@ -64,6 +68,18 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderPagePro
     .from(orderItems)
     .where(eq(orderItems.orderId, orderId));
 
+  const rawNotes = await db
+    .select()
+    .from(orderNotes)
+    .where(eq(orderNotes.orderId, orderId))
+    .orderBy(desc(orderNotes.createdAt));
+
+  // Serialize dates for client component
+  const notes = rawNotes.map((n) => ({
+    ...n,
+    createdAt: n.createdAt.toISOString(),
+  }));
+
   let zoneName = null;
   if (order.deliveryZoneId) {
     const [zone] = await db
@@ -82,92 +98,155 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderPagePro
     .limit(1);
 
   return (
-    <div className="flex-1 bg-[#F2EDE1]">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1 text-sm text-[#8A9283] hover:text-[#4A6B6D] mb-6 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to Home
-        </Link>
+    <div className="space-y-6">
+      {/* Back link */}
+      <Link
+        href="/admin/orders"
+        className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back to Orders
+      </Link>
 
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <h1
-              className="text-3xl font-bold text-[#2C2C2C]"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-            >
-              Order #{order.id}
-            </h1>
-            <OrderStatusBadge status={order.status} />
-          </div>
-        </div>
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <h1 className="text-2xl font-bold text-white">Order #{order.id}</h1>
+        <OrderStatusBadge status={order.status} size="md" />
+      </div>
 
-        {/* Customer Info */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-[#E0D8C8] mb-6">
-          <h2 className="text-sm font-semibold text-[#5A5A4A] uppercase tracking-wider mb-3">
-            Customer
-          </h2>
-          <p className="text-[#2C2C2C] font-medium">{customerProfile?.fullName ?? "N/A"}</p>
-          <p className="text-[#8A9283] text-sm">{customerProfile?.email ?? "N/A"}</p>
-          <p className="text-[#8A9283] text-sm">{customerProfile?.phone ?? "No phone"}</p>
-        </div>
-
-        {/* Items */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-[#E0D8C8] mb-6">
-          <h2 className="text-sm font-semibold text-[#5A5A4A] uppercase tracking-wider mb-3">Items</h2>
-          <div className="space-y-2">
-            {items.map((item) => (
-              <div key={item.id} className="flex justify-between text-sm">
-                <span className="text-[#5A5A4A]">{item.nameSnapshot} × {item.quantity}</span>
-                <span className="font-medium">{formatPrice(item.priceSnapshot * item.quantity)}</span>
+      {/* Two-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Items */}
+          <div className="bg-[#16213e] rounded-xl border border-white/5 p-6">
+            <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+              <Package className="h-4 w-4 text-[#A6822E]" /> Items
+            </h2>
+            <div className="divide-y divide-white/5">
+              {items.map((item) => (
+                <div key={item.id} className="flex justify-between items-center py-3 first:pt-0 last:pb-0">
+                  <div>
+                    <p className="text-sm font-medium text-white">{item.nameSnapshot}</p>
+                    <p className="text-xs text-gray-400">× {item.quantity}</p>
+                  </div>
+                  <span className="text-sm font-medium text-white">
+                    {formatPrice(item.priceSnapshot * item.quantity)}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-white/5 mt-3 pt-3 flex justify-between items-center">
+              <span className="text-sm text-gray-400">Subtotal</span>
+              <span className="text-sm font-medium text-white">{formatPrice(order.subtotal)}</span>
+            </div>
+            {order.deliveryFee ? (
+              <div className="flex justify-between items-center py-1">
+                <span className="text-sm text-gray-400">Delivery fee</span>
+                <span className="text-sm font-medium text-white">{formatPrice(order.deliveryFee)}</span>
               </div>
-            ))}
+            ) : null}
+            <div className="border-t border-white/5 mt-3 pt-3 flex justify-between items-center">
+              <span className="text-base font-bold text-white">Total</span>
+              <span className="text-lg font-bold text-[#A6822E]">{formatPrice(order.total)}</span>
+            </div>
           </div>
-          <div className="border-t border-[#E0D8C8] mt-3 pt-3 flex justify-between font-bold">
-            <span>Total</span>
-            <span className="text-[#4A6B6D]">{formatPrice(order.total)}</span>
+
+          {/* Delivery */}
+          <div className="bg-[#16213e] rounded-xl border border-white/5 p-6">
+            <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-[#A6822E]" /> Delivery
+            </h2>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Method</span>
+                <span className="text-white capitalize">{order.deliveryMethod ?? "N/A"}</span>
+              </div>
+              {zoneName && (
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Zone</span>
+                  <span className="text-white">{zoneName}</span>
+                </div>
+              )}
+              {order.deliveryAddress && (
+                <div className="pt-2 border-t border-white/5">
+                  <span className="text-gray-400 block mb-1">Address</span>
+                  <span className="text-white whitespace-pre-line text-xs">{order.deliveryAddress}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Delivery */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-[#E0D8C8] mb-6">
-          <h2 className="text-sm font-semibold text-[#5A5A4A] uppercase tracking-wider mb-3">Delivery</h2>
-          <p className="text-sm text-[#5A5A4A] capitalize">Method: {order.deliveryMethod ?? "N/A"}</p>
-          {zoneName && <p className="text-sm text-[#5A5A4A]">Zone: {zoneName}</p>}
-          {order.deliveryAddress && (
-            <p className="text-sm text-[#5A5A4A] mt-1 whitespace-pre-line">Address: {order.deliveryAddress}</p>
-          )}
-        </div>
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Customer */}
+          <div className="bg-[#16213e] rounded-xl border border-white/5 p-6">
+            <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+              <User className="h-4 w-4 text-[#A6822E]" /> Customer
+            </h2>
+            <div className="space-y-2 text-sm">
+              <p className="text-white font-medium">{customerProfile?.fullName ?? "N/A"}</p>
+              <p className="text-gray-400 text-xs">{customerProfile?.email ?? "N/A"}</p>
+              {customerProfile?.phone && (
+                <p className="text-gray-400 text-xs">{customerProfile.phone}</p>
+              )}
+            </div>
+          </div>
 
-        {/* Receipt */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-[#E0D8C8] mb-6">
-          <h2 className="text-sm font-semibold text-[#5A5A4A] uppercase tracking-wider mb-3">Receipt</h2>
-          {order.receiptUrl ? (
-            <a
-              href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${order.receiptUrl}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#4A6B6D] underline text-sm hover:no-underline"
-            >
-              View Receipt
-            </a>
-          ) : (
-            <p className="text-sm text-amber-600">No receipt uploaded yet.</p>
-          )}
-        </div>
+          {/* Receipt */}
+          <div className="bg-[#16213e] rounded-xl border border-white/5 p-6">
+            <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Receipt</h2>
+            {order.receiptUrl ? (
+              <a
+                href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${order.receiptUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-[#A6822E] hover:text-[#C4A85D] transition-colors"
+              >
+                <ExternalLink className="h-4 w-4" />
+                View Receipt
+              </a>
+            ) : (
+              <p className="text-sm text-amber-400/80">No receipt uploaded yet.</p>
+            )}
+          </div>
 
-        {/* Update Status */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-[#E0D8C8]">
-          <h2 className="text-sm font-semibold text-[#5A5A4A] uppercase tracking-wider mb-4">
-            Update Status
-          </h2>
-          <OrderStatusUpdateForm
-            orderId={order.id}
-            currentStatus={order.status}
-            customerEmail={customerProfile?.email ?? ""}
-            customerName={customerProfile?.fullName ?? "Customer"}
-          />
+          {/* Order Notes */}
+          <div className="bg-[#16213e] rounded-xl border border-white/5 p-6">
+            <NotesSection orderId={order.id} initialNotes={notes} />
+          </div>
+
+          {/* Order info */}
+          <div className="bg-[#16213e] rounded-xl border border-white/5 p-6">
+            <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Order Info</h2>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Date</span>
+                <span className="text-white">
+                  {new Date(order.createdAt).toLocaleDateString("en-NG", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Items</span>
+                <span className="text-white">{items.length}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Update Status */}
+          <div className="bg-[#16213e] rounded-xl border border-white/5 p-6">
+            <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Update Status</h2>
+            <OrderStatusUpdateForm
+              orderId={order.id}
+              currentStatus={order.status}
+              customerEmail={customerProfile?.email ?? ""}
+              customerName={customerProfile?.fullName ?? "Customer"}
+            />
+          </div>
         </div>
       </div>
     </div>

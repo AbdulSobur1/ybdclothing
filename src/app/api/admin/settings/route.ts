@@ -13,6 +13,9 @@ const SETTING_DEFAULTS: Record<string, string> = {
   owner_email: config.ownerEmail,
   resend_from: config.resendFrom,
   whatsapp_number: config.whatsappNumber,
+  phone_number: config.phone,
+  instagram: "https://www.instagram.com/Ybd___clothing_/",
+  tiktok: "https://www.tiktok.com/@ybd_clothing_",
 };
 
 async function getSetting(key: string): Promise<string> {
@@ -71,7 +74,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const [bankName, bankAccountName, bankAccountNumber, ownerEmail, resendFrom, whatsappNumber] =
+  const [bankName, bankAccountName, bankAccountNumber, ownerEmail, resendFrom, whatsappNumber, phoneNumber, instagram, tiktok] =
     await Promise.all([
       getSetting("bank_name"),
       getSetting("bank_account_name"),
@@ -79,6 +82,9 @@ export async function GET() {
       getSetting("owner_email"),
       getSetting("resend_from"),
       getSetting("whatsapp_number"),
+      getSetting("phone_number"),
+      getSetting("instagram"),
+      getSetting("tiktok"),
     ]);
 
   return NextResponse.json({
@@ -88,6 +94,9 @@ export async function GET() {
     ownerEmail,
     resendFrom,
     whatsappNumber,
+    phoneNumber,
+    instagram,
+    tiktok,
   });
 }
 
@@ -107,7 +116,7 @@ export async function PUT(request: Request) {
   }
 
   const body = await request.json();
-  const { bankName, bankAccountName, bankAccountNumber, ownerEmail, resendFrom, whatsappNumber } = body;
+  const { bankName, bankAccountName, bankAccountNumber, ownerEmail, resendFrom, whatsappNumber, phoneNumber, instagram, tiktok } = body;
 
   try {
     const updates: Promise<void>[] = [];
@@ -117,6 +126,9 @@ export async function PUT(request: Request) {
     if (ownerEmail !== undefined) updates.push(setSetting("owner_email", ownerEmail));
     if (resendFrom !== undefined) updates.push(setSetting("resend_from", resendFrom));
     if (whatsappNumber !== undefined) updates.push(setSetting("whatsapp_number", whatsappNumber));
+    if (phoneNumber !== undefined) updates.push(setSetting("phone_number", phoneNumber));
+    if (instagram !== undefined) updates.push(setSetting("instagram", instagram));
+    if (tiktok !== undefined) updates.push(setSetting("tiktok", tiktok));
 
     await Promise.all(updates);
 

@@ -15,6 +15,8 @@ import {
   RefreshCw,
   BarChart3,
   TrendingDown,
+  AlertTriangle,
+  AlertCircle,
 } from "lucide-react";
 import { SkeletonStatsGrid, SkeletonTable, SkeletonLine } from "@/components/Skeleton";
 
@@ -44,6 +46,17 @@ interface DashboardData {
     orders: number;
     revenue: number;
   }>;
+  lowStockItems: Array<{
+    variantId: number;
+    productId: number;
+    productName: string;
+    color: string | null;
+    size: string | null;
+    stockQuantity: number;
+    sku: string | null;
+  }>;
+  lowStockCount: number;
+  outOfStockCount: number;
 }
 
 const statusColors: Record<string, string> = {
@@ -159,7 +172,7 @@ export default function AdminDashboard() {
             <div className="w-10 h-10 rounded-lg bg-[#A6822E]/20 flex items-center justify-center">
               <ShoppingBag className="h-5 w-5 text-[#A6822E]" />
             </div>
-            <TrendingUp className="h-4 w-4 text-emerald-400" />
+            {data.totalOrders > 0 && <TrendingUp className="h-4 w-4 text-emerald-400" />}
           </div>
           <p className="text-2xl font-bold text-white">{data.totalOrders}</p>
           <p className="text-xs text-gray-400 mt-1">Total Orders</p>
@@ -380,6 +393,62 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Stock alerts */}
+      {(data.lowStockCount > 0 || data.outOfStockCount > 0) && (
+        <div className="bg-[#16213e] rounded-xl border border-white/5 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <AlertTriangle className="h-5 w-5 text-amber-400" />
+            <h2 className="text-sm font-semibold text-white">Stock Alerts</h2>
+            {data.lowStockCount > 0 && (
+              <span className="ml-2 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-medium">
+                {data.lowStockCount} low
+              </span>
+            )}
+            {data.outOfStockCount > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[10px] font-medium">
+                {data.outOfStockCount} out of stock
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {data.lowStockItems.filter((i) => i.stockQuantity > 0).slice(0, 6).map((item) => (
+              <Link
+                key={item.variantId}
+                href={`/admin/products/${item.productId}/edit`}
+                className="flex items-center gap-3 bg-white/5 rounded-lg p-3 hover:bg-white/10 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="h-4 w-4 text-amber-400" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-white truncate">{item.productName}</p>
+                  <p className="text-xs text-gray-400">
+                    {[item.color, item.size].filter(Boolean).join(" / ") || "Default"} — {item.stockQuantity} left
+                  </p>
+                </div>
+              </Link>
+            ))}
+            {data.lowStockItems.filter((i) => i.stockQuantity <= 0).slice(0, 3).map((item) => (
+              <Link
+                key={item.variantId}
+                href={`/admin/products/${item.productId}/edit`}
+                className="flex items-center gap-3 bg-red-500/10 rounded-lg p-3 hover:bg-red-500/20 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="h-4 w-4 text-red-400" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-white truncate">{item.productName}</p>
+                  <p className="text-xs text-red-400">
+                    {[item.color, item.size].filter(Boolean).join(" / ") || "Default"} — Out of stock
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

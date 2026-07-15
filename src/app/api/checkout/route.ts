@@ -12,6 +12,7 @@ import {
 } from "@/lib/db/schema";
 import { config } from "@/lib/config";
 import { sendNewOrderNotification } from "@/lib/email";
+import { checkAdmin } from "@/lib/admin";
 import { eq, inArray, sql } from "drizzle-orm";
 
 /**
@@ -29,6 +30,11 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  // Prevent admin from placing orders
+  if (await checkAdmin(user.id)) {
+    return NextResponse.json({ error: "Admin accounts cannot place orders" }, { status: 403 });
   }
 
   const body = await request.json();

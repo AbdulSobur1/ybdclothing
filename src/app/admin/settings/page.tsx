@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Banknote, MessageCircle, Save, Loader2 } from "lucide-react";
+import { Banknote, MessageCircle, Save, Loader2, Globe, AtSign, Smartphone } from "lucide-react";
 import { config } from "@/lib/config";
 
 export default function AdminSettingsPage() {
@@ -13,6 +13,9 @@ export default function AdminSettingsPage() {
     bankAccountNumber: "",
     whatsappNumber: "",
     ownerEmail: "",
+    phoneNumber: "",
+    instagram: "",
+    tiktok: "",
   });
 
   useEffect(() => {
@@ -34,6 +37,9 @@ export default function AdminSettingsPage() {
         bankAccountNumber: config.bank.accountNumber,
         whatsappNumber: config.whatsappNumber,
         ownerEmail: config.ownerEmail,
+        phoneNumber: config.phone,
+        instagram: "https://www.instagram.com/Ybd___clothing_/",
+        tiktok: "https://www.tiktok.com/@ybd_clothing_",
       });
     }
   }
@@ -131,7 +137,17 @@ export default function AdminSettingsPage() {
                 value={settings.whatsappNumber}
                 onChange={(e) => setSettings((s) => ({ ...s, whatsappNumber: e.target.value }))}
                 className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#A6822E] transition-all"
-                placeholder="2348000000000"
+                placeholder="2347081698695"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Phone Number</label>
+              <input
+                type="text"
+                value={settings.phoneNumber}
+                onChange={(e) => setSettings((s) => ({ ...s, phoneNumber: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#A6822E] transition-all"
+                placeholder="09164606486"
               />
             </div>
             <div>
@@ -142,6 +158,42 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setSettings((s) => ({ ...s, ownerEmail: e.target.value }))}
                 className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#A6822E] transition-all"
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Social Links */}
+        <div className="bg-[#16213e] rounded-xl border border-white/5 p-6">
+          <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+            <Globe className="h-4 w-4 text-[#A6822E]" />
+            Social Links
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Instagram URL</label>
+              <div className="relative">
+                <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                <input
+                  type="url"
+                  value={settings.instagram}
+                  onChange={(e) => setSettings((s) => ({ ...s, instagram: e.target.value }))}
+                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#A6822E] transition-all"
+                  placeholder="https://www.instagram.com/yourpage/"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">TikTok URL</label>
+              <div className="relative">
+                <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                <input
+                  type="url"
+                  value={settings.tiktok}
+                  onChange={(e) => setSettings((s) => ({ ...s, tiktok: e.target.value }))}
+                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#A6822E] transition-all"
+                  placeholder="https://www.tiktok.com/@yourpage"
+                />
+              </div>
             </div>
           </div>
         </div>
