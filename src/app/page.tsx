@@ -7,35 +7,32 @@ import { eq, desc } from "drizzle-orm";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const testimonialRows = await db
-    .select()
-    .from(testimonials)
-    .where(eq(testimonials.active, true))
-    .orderBy(desc(testimonials.createdAt));
+  // Load testimonials from DB — gracefully fall back to hardcoded defaults
+  // if the table doesn't exist (migration not yet run) or DB is unavailable
+  let displayedTestimonials = [
+    { quote: "The quality of the tees is insane. I've been wearing mine constantly and it still looks brand new. Definitely my new go-to brand.", author: "Chidi O.", role: "Lagos", rating: 5 },
+    { quote: "Ordered a cap and it arrived in 2 days. The fit is perfect, the embroidery is clean. YBD is doing something special here.", author: "Tunde A.", role: "Abuja", rating: 5 },
+    { quote: "Finally, streetwear that actually fits well. I'm a bigger guy and the XXL tee fits perfectly. More brands need to take notes.", author: "Femi K.", role: "Port Harcourt", rating: 5 },
+  ];
 
-  // Fallback to defaults if no testimonials in DB
-  const displayedTestimonials = testimonialRows.length > 0
-    ? testimonialRows.slice(0, 3)
-    : [
-        {
-          quote: "The quality of the tees is insane. I've been wearing mine constantly and it still looks brand new. Definitely my new go-to brand.",
-          author: "Chidi O.",
-          role: "Lagos",
-          rating: 5,
-        },
-        {
-          quote: "Ordered a cap and it arrived in 2 days. The fit is perfect, the embroidery is clean. YBD is doing something special here.",
-          author: "Tunde A.",
-          role: "Abuja",
-          rating: 5,
-        },
-        {
-          quote: "Finally, streetwear that actually fits well. I'm a bigger guy and the XXL tee fits perfectly. More brands need to take notes.",
-          author: "Femi K.",
-          role: "Port Harcourt",
-          rating: 5,
-        },
-      ];
+  try {
+    const testimonialRows = await db
+      .select()
+      .from(testimonials)
+      .where(eq(testimonials.active, true))
+      .orderBy(desc(testimonials.createdAt));
+
+    if (testimonialRows.length > 0) {
+      displayedTestimonials = testimonialRows.slice(0, 3).map((t) => ({
+        quote: t.quote,
+        author: t.author,
+        role: t.role ?? "",
+        rating: t.rating ?? 5,
+      }));
+    }
+  } catch {
+    // DB query failed (table doesn't exist, etc.) — use hardcoded fallback
+  }
   return (
     <div className="flex-1">
       {/* =============================== */}
