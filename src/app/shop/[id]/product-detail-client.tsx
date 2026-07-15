@@ -100,6 +100,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   // Wishlist state
   const [wishlisted, setWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [wishlistError, setWishlistError] = useState(false);
 
   const handleAddToCart = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -170,6 +171,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
       return;
     }
     setWishlistLoading(true);
+    setWishlistError(false);
     try {
       const res = await fetch("/api/wishlist", {
         method: "POST",
@@ -179,7 +181,13 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
       if (res.ok) {
         const data = await res.json();
         setWishlisted(data.wishlisted);
+      } else {
+        setWishlistError(true);
+        setTimeout(() => setWishlistError(false), 3000);
       }
+    } catch {
+      setWishlistError(true);
+      setTimeout(() => setWishlistError(false), 3000);
     } finally {
       setWishlistLoading(false);
     }
@@ -214,11 +222,15 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         <button
           onClick={handleWishlist}
           disabled={wishlistLoading}
-          className="absolute top-4 right-4 p-2.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm hover:bg-rose-50 transition-all"
-          title={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          className={`absolute top-4 right-4 p-2.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm transition-all ${
+            wishlistError ? "bg-red-50" : "hover:bg-rose-50"
+          }`}
+          title={wishlistError ? "Failed — try again" : wishlisted ? "Remove from wishlist" : "Add to wishlist"}
         >
           {wishlistLoading ? (
             <Loader2 className="h-5 w-5 animate-spin text-rose-500" />
+          ) : wishlistError ? (
+            <span className="text-sm font-bold text-red-500">!</span>
           ) : (
             <Heart
               className={`h-5 w-5 transition-colors ${

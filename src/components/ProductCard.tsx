@@ -83,6 +83,7 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
   const [added, setAdded] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [wishlistError, setWishlistError] = useState(false);
   const [waitlisting, setWaitlisting] = useState(false);
   const [waitlisted, setWaitlisted] = useState(false);
   const [waitlistError, setWaitlistError] = useState(false);
@@ -174,6 +175,7 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
       return;
     }
     setWishlistLoading(true);
+    setWishlistError(false);
     try {
       const res = await fetch("/api/wishlist", {
         method: "POST",
@@ -183,7 +185,13 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
       if (res.ok) {
         const data = await res.json();
         setWishlisted(data.wishlisted);
+      } else {
+        setWishlistError(true);
+        setTimeout(() => setWishlistError(false), 3000);
       }
+    } catch {
+      setWishlistError(true);
+      setTimeout(() => setWishlistError(false), 3000);
     } finally {
       setWishlistLoading(false);
     }
@@ -227,12 +235,18 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
           onClick={handleWishlist}
           disabled={wishlistLoading}
           className={`absolute top-3 right-3 p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-sm transition-all z-10 ${
-            wishlisted ? "hover:bg-rose-50" : "hover:bg-rose-50 opacity-0 group-hover:opacity-100"
+            wishlisted
+              ? "hover:bg-rose-50"
+              : wishlistError
+                ? "bg-red-50"
+                : "hover:bg-rose-50 opacity-0 group-hover:opacity-100"
           }`}
-          title={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          title={wishlistError ? "Failed — try again" : wishlisted ? "Remove from wishlist" : "Add to wishlist"}
         >
           {wishlistLoading ? (
             <Loader2 className="h-4 w-4 animate-spin text-rose-500" />
+          ) : wishlistError ? (
+            <span className="text-[10px] font-medium text-red-500">!</span>
           ) : (
             <Heart
               className={`h-4 w-4 transition-colors ${

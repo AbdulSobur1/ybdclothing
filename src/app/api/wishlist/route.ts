@@ -3,11 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { wishlistItems, products, productVariants } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
+import { withErrorHandling, validatePositiveInteger, requireContentType } from "@/lib/api-helpers";
 
 /**
  * GET /api/wishlist — List the current user's wishlist items with product details.
  */
-export async function GET() {
+export const GET = withErrorHandling(async function () {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -31,12 +32,15 @@ export async function GET() {
     .orderBy(wishlistItems.createdAt);
 
   return NextResponse.json({ items });
-}
+});
 
 /**
  * POST /api/wishlist — Add an item to the wishlist.
  */
-export async function POST(request: Request) {
+export const POST = withErrorHandling(async function (request: Request) {
+  const contentTypeError = requireContentType(request);
+  if (contentTypeError) return contentTypeError;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -47,8 +51,9 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { productId, variantId } = body;
 
-  if (!productId) {
-    return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
+  const idError = validatePositiveInteger(productId, "Product ID");
+  if (idError) {
+    return NextResponse.json({ error: idError }, { status: 400 });
   }
 
   // Check if already wishlisted
@@ -80,12 +85,15 @@ export async function POST(request: Request) {
   });
 
   return NextResponse.json({ wishlisted: true, message: "Added to wishlist" });
-}
+});
 
 /**
  * DELETE /api/wishlist — Remove an item from the wishlist.
  */
-export async function DELETE(request: Request) {
+export const DELETE = withErrorHandling(async function (request: Request) {
+  const contentTypeError = requireContentType(request);
+  if (contentTypeError) return contentTypeError;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -96,8 +104,9 @@ export async function DELETE(request: Request) {
   const body = await request.json();
   const { productId } = body;
 
-  if (!productId) {
-    return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
+  const idError = validatePositiveInteger(productId, "Product ID");
+  if (idError) {
+    return NextResponse.json({ error: idError }, { status: 400 });
   }
 
   await db
@@ -110,4 +119,4 @@ export async function DELETE(request: Request) {
     );
 
   return NextResponse.json({ success: true });
-}
+});

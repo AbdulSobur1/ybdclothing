@@ -80,6 +80,20 @@ CREATE POLICY "Users can insert own order items"
 -- INSERT INTO storage.buckets (id, name, public) VALUES ('receipts', 'receipts', false)
 -- ON CONFLICT (id) DO NOTHING;
 
+-- Ensure the product-images bucket exists (for admin product image uploads)
+-- INSERT INTO storage.buckets (id, name, public) VALUES ('product-images', 'product-images', true)
+-- ON CONFLICT (id) DO NOTHING;
+
+-- Allow public read access to product images
+-- CREATE POLICY "Anyone can read product images"
+--   ON storage.objects FOR SELECT
+--   USING (bucket_id = 'product-images');
+
+-- Allow admin to upload product images
+-- CREATE POLICY "Admin can upload product images"
+--   ON storage.objects FOR INSERT
+--   WITH CHECK (bucket_id = 'product-images' AND auth.role() = 'service_role');
+
 -- Allow authenticated users to upload their own receipts
 CREATE POLICY "Users can upload receipts"
   ON storage.objects FOR INSERT
@@ -155,3 +169,33 @@ ALTER TABLE delivery_zones ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Anyone can read delivery zones"
   ON delivery_zones FOR SELECT
   USING (true);
+
+-- 11. Order Notes (admin-only)
+ALTER TABLE order_notes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Only admin can read order notes"
+  ON order_notes FOR SELECT
+  USING (auth.role() = 'service_role');
+
+CREATE POLICY "Only admin can insert order notes"
+  ON order_notes FOR INSERT
+  WITH CHECK (auth.role() = 'service_role');
+
+-- 12. Testimonials (public read-only, admin-only write)
+ALTER TABLE testimonials ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can read testimonials"
+  ON testimonials FOR SELECT
+  USING (true);
+
+CREATE POLICY "Only admin can manage testimonials"
+  ON testimonials FOR INSERT
+  WITH CHECK (auth.role() = 'service_role');
+
+CREATE POLICY "Only admin can update testimonials"
+  ON testimonials FOR UPDATE
+  USING (auth.role() = 'service_role');
+
+CREATE POLICY "Only admin can delete testimonials"
+  ON testimonials FOR DELETE
+  USING (auth.role() = 'service_role');

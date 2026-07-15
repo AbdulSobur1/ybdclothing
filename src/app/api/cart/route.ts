@@ -4,11 +4,12 @@ import { db } from "@/lib/db";
 import { cartItems, productVariants, products } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { checkAdmin } from "@/lib/admin";
+import { withErrorHandling } from "@/lib/api-helpers";
 
 /**
  * GET /api/cart — Fetch the current user's cart items with product details.
  */
-export async function GET() {
+export const GET = withErrorHandling(async function () {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -31,12 +32,12 @@ export async function GET() {
     .where(eq(cartItems.userId, user.id));
 
   return NextResponse.json({ items });
-}
+});
 
 /**
  * POST /api/cart — Add item to cart (or increment quantity if already exists).
  */
-export async function POST(request: Request) {
+export const POST = withErrorHandling(async function (request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -89,12 +90,12 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ success: true });
-}
+});
 
 /**
  * PATCH /api/cart — Update item quantity.
  */
-export async function PATCH(request: Request) {
+export const PATCH = withErrorHandling(async function (request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -121,12 +122,12 @@ export async function PATCH(request: Request) {
   }
 
   return NextResponse.json({ success: true });
-}
+});
 
 /**
  * DELETE /api/cart — Remove an item from cart.
  */
-export async function DELETE(request: Request) {
+export const DELETE = withErrorHandling(async function (request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -146,4 +147,4 @@ export async function DELETE(request: Request) {
     .where(and(eq(cartItems.id, itemId), eq(cartItems.userId, user.id)));
 
   return NextResponse.json({ success: true });
-}
+});
