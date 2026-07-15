@@ -1,7 +1,41 @@
 import Link from "next/link";
 import { CategoryCards } from "@/components/CategoryCards";
+import { db } from "@/lib/db";
+import { testimonials } from "@/lib/db/schema";
+import { eq, desc } from "drizzle-orm";
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const testimonialRows = await db
+    .select()
+    .from(testimonials)
+    .where(eq(testimonials.active, true))
+    .orderBy(desc(testimonials.createdAt));
+
+  // Fallback to defaults if no testimonials in DB
+  const displayedTestimonials = testimonialRows.length > 0
+    ? testimonialRows.slice(0, 3)
+    : [
+        {
+          quote: "The quality of the tees is insane. I've been wearing mine constantly and it still looks brand new. Definitely my new go-to brand.",
+          author: "Chidi O.",
+          role: "Lagos",
+          rating: 5,
+        },
+        {
+          quote: "Ordered a cap and it arrived in 2 days. The fit is perfect, the embroidery is clean. YBD is doing something special here.",
+          author: "Tunde A.",
+          role: "Abuja",
+          rating: 5,
+        },
+        {
+          quote: "Finally, streetwear that actually fits well. I'm a bigger guy and the XXL tee fits perfectly. More brands need to take notes.",
+          author: "Femi K.",
+          role: "Port Harcourt",
+          rating: 5,
+        },
+      ];
   return (
     <div className="flex-1">
       {/* =============================== */}
@@ -162,30 +196,14 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                quote: "The quality of the tees is insane. I've been wearing mine constantly and it still looks brand new. Definitely my new go-to brand.",
-                author: "Chidi O.",
-                role: "Lagos",
-              },
-              {
-                quote: "Ordered a cap and it arrived in 2 days. The fit is perfect, the embroidery is clean. YBD is doing something special here.",
-                author: "Tunde A.",
-                role: "Abuja",
-              },
-              {
-                quote: "Finally, streetwear that actually fits well. I'm a bigger guy and the XXL tee fits perfectly. More brands need to take notes.",
-                author: "Femi K.",
-                role: "Port Harcourt",
-              },
-            ].map((testimonial, i) => (
+            {displayedTestimonials.map((testimonial, i) => (
               <div
                 key={i}
                 className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E0D8C8] hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
               >
                 {/* Stars */}
                 <div className="flex gap-1 mb-4">
-                  {[...Array(5)].map((_, s) => (
+                  {Array.from({ length: testimonial.rating ?? 5 }).map((_, s) => (
                     <svg key={s} className="w-4 h-4 text-[#A6822E]" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
@@ -202,7 +220,7 @@ export default function HomePage() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-[#2C2C2C]">{testimonial.author}</p>
-                    <p className="text-xs text-[#8A9283]">{testimonial.role}</p>
+                    <p className="text-xs text-[#8A9283]">{testimonial.role ?? ""}</p>
                   </div>
                 </div>
               </div>

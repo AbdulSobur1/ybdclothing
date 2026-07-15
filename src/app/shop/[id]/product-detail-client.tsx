@@ -95,6 +95,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   // Waitlist state
   const [waitlisting, setWaitlisting] = useState(false);
   const [waitlisted, setWaitlisted] = useState(false);
+  const [waitlistError, setWaitlistError] = useState(false);
 
   // Wishlist state
   const [wishlisted, setWishlisted] = useState(false);
@@ -148,7 +149,15 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
       if (res.ok) {
         setWaitlisted(true);
         setTimeout(() => setWaitlisted(false), 3000);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setWaitlistError(true);
+        setTimeout(() => setWaitlistError(false), 3000);
+        console.error("Waitlist API error:", data.error || res.statusText);
       }
+    } catch {
+      setWaitlistError(true);
+      setTimeout(() => setWaitlistError(false), 3000);
     } finally {
       setWaitlisting(false);
     }
@@ -350,7 +359,9 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             className={`flex-1 py-3 px-6 rounded-full text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 border ${
               waitlisted
                 ? "bg-emerald-50 border-emerald-300 text-emerald-700"
-                : "border-[#A6822E] text-[#A6822E] hover:bg-[#A6822E]/5 active:scale-[0.97]"
+                : waitlistError
+                  ? "bg-red-50 border-red-300 text-red-600"
+                  : "border-[#A6822E] text-[#A6822E] hover:bg-[#A6822E]/5 active:scale-[0.97]"
             }`}
           >
             {waitlisting ? (
@@ -359,6 +370,8 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
               <>
                 <Check className="h-4 w-4" /> You&apos;re on the list ✓
               </>
+            ) : waitlistError ? (
+              <span>Failed — try again</span>
             ) : (
               <>
                 <Clock className="h-4 w-4" /> Add to Waitlist

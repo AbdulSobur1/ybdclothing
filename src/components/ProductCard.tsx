@@ -85,6 +85,7 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const [waitlisting, setWaitlisting] = useState(false);
   const [waitlisted, setWaitlisted] = useState(false);
+  const [waitlistError, setWaitlistError] = useState(false);
 
   // Check wishlist status on mount
   useEffect(() => {
@@ -122,7 +123,15 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
       if (res.ok) {
         setWaitlisted(true);
         setTimeout(() => setWaitlisted(false), 3000);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setWaitlistError(true);
+        setTimeout(() => setWaitlistError(false), 3000);
+        console.error("Waitlist API error:", data.error || res.statusText);
       }
+    } catch {
+      setWaitlistError(true);
+      setTimeout(() => setWaitlistError(false), 3000);
     } finally {
       setWaitlisting(false);
     }
@@ -354,7 +363,9 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
             className={`w-full py-2 rounded-full text-xs font-medium transition-all duration-200 flex items-center justify-center gap-1.5 border ${
               waitlisted
                 ? "bg-emerald-50 border-emerald-300 text-emerald-700"
-                : "border-[#A6822E] text-[#A6822E] hover:bg-[#A6822E]/5 active:scale-[0.97]"
+                : waitlistError
+                  ? "bg-red-50 border-red-300 text-red-600"
+                  : "border-[#A6822E] text-[#A6822E] hover:bg-[#A6822E]/5 active:scale-[0.97]"
             }`}
           >
             {waitlisting ? (
@@ -363,6 +374,8 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
               <>
                 <Check className="h-3.5 w-3.5" /> You&apos;re on the list ✓
               </>
+            ) : waitlistError ? (
+              <span>Failed — try again</span>
             ) : (
               <>
                 <Clock className="h-3.5 w-3.5" /> Add to Waitlist
