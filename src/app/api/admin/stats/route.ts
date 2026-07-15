@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
-import { orders, products, profiles, deliveryZones } from "@/lib/db/schema";
+import { orders, products, profiles, productVariants } from "@/lib/db/schema";
 import { eq, sql, desc } from "drizzle-orm";
 import { checkAdmin } from "@/lib/admin";
 
@@ -65,6 +65,22 @@ export async function GET() {
     .orderBy(desc(products.createdAt))
     .limit(6);
 
+  // Low-stock variants (stock 1-5) and out-of-stock variants
+  const lowStockItems = await db
+    .select({
+      variantId: productVariants.id,
+      productId: productVariants.productId,
+      productName: products.name,
+      color: productVariants.color,
+      size: productVariants.size,
+      stockQuantity: productVariants.stockQuantity,
+      sku: productVariants.sku,
+    })
+    .from(productVariants)
+    .leftJoin(products, eq(productVariants.productId, products.id))
+    .where(sql`${productVariants.stockQuantity} <= 5`)
+    .orderBy(productVariants.stockQuantity);
+
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
   const ordersByMonth = await db
@@ -90,6 +106,9 @@ export async function GET() {
     }),
   );
 
+  const lowStockCount = lowStockItems.filter((i) => i.stockQuantity > 0).length;
+  const outOfStockCount = lowStockItems.filter((i) => i.stockQuantity <= 0).length;
+
   return NextResponse.json({
     totalOrders: Number(totalOrdersResult?.count ?? 0),
     ordersByStatus: ordersByStatus.reduce((acc, row) => {
@@ -107,5 +126,8 @@ export async function GET() {
       orders: Number(row.count),
       revenue: Number(row.revenue),
     })),
+    lowStockItems,
+    lowStockCount,
+    outOfStockCount,
   });
 }

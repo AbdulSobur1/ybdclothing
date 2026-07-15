@@ -195,6 +195,36 @@ export const orderItems = pgTable("order_items", {
 });
 
 // ──────────────────────────────────────────────
+// Order Notes (internal admin notes on orders)
+// ──────────────────────────────────────────────
+
+export const orderNotes = pgTable("order_notes", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id")
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  note: text("note").notNull(),
+  createdBy: uuid("created_by").references(() => authUsers.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ──────────────────────────────────────────────
+// Testimonials
+// ──────────────────────────────────────────────
+
+export const testimonials = pgTable("testimonials", {
+  id: serial("id").primaryKey(),
+  quote: text("quote").notNull(),
+  author: varchar("author", { length: 255 }).notNull(),
+  role: varchar("role", { length: 255 }),
+  rating: integer("rating").default(5).notNull(),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ──────────────────────────────────────────────
 // Reference to Supabase auth.users (for FK)
 // Drizzle doesn't manage auth.users — this is just
 // so we can reference it in FK constraints.
