@@ -74,7 +74,7 @@ export default async function HomePage() {
               className="text-lg text-[#D4CFC2] mb-8 max-w-lg animate-fade-in"
               style={{ animationDelay: "0.15s" }}
             >
-              Premium caps, tees, and hats for those who dare to stand out. Bold designs,
+              Premium caps, tees, and jerseys for those who dare to stand out. Bold designs,
               quality craftsmanship.
             </p>
             <div

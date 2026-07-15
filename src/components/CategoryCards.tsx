@@ -25,9 +25,9 @@ const categoryData = [
     hoverStyle: "hover:border-[#A6822E]/40 hover:shadow-md",
   },
   {
-    category: "hat",
-    title: "Hats",
-    description: "Trucker & bucket styles",
+    category: "jersey",
+    title: "Jerseys",
+    description: "Premium sport & street styles",
     icon: Diamond,
     color: "#5A7B7D",
     bgColor: "from-[#5A7B7D]/10 to-[#5A7B7D]/5",

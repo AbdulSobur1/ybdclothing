@@ -13,7 +13,7 @@ const CATEGORIES = [
   { value: "all", label: "All Products" },
   { value: "cap", label: "Caps" },
   { value: "tee", label: "Tees" },
-  { value: "hat", label: "Hats" },
+  { value: "jersey", label: "Jerseys" },
 ] as const;
 
 export function StorefrontClient({ products }: StorefrontClientProps) {
@@ -23,7 +23,7 @@ export function StorefrontClient({ products }: StorefrontClientProps) {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const catParam = params.get("category");
-    if (catParam && ["cap", "tee", "hat", "all"].includes(catParam)) {
+    if (catParam && ["cap", "tee", "jersey", "all"].includes(catParam)) {
       setActiveCategory(catParam);
     }
   }, []);
@@ -33,7 +33,7 @@ export function StorefrontClient({ products }: StorefrontClientProps) {
     const handler = (e: Event) => {
       const customEvent = e as CustomEvent;
       const cat = customEvent.detail;
-      if (["cap", "tee", "hat", "all"].includes(cat)) {
+      if (["cap", "tee", "jersey", "all"].includes(cat)) {
         setActiveCategory(cat);
       }
     };

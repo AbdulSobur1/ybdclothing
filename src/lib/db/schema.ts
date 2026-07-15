@@ -50,7 +50,7 @@ export const products = pgTable("products", {
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
   basePrice: integer("base_price").notNull(), // stored in Naira (integer to avoid float issues)
-  category: varchar("category", { length: 50 }).notNull(), // "cap", "tee", "hat"
+  category: varchar("category", { length: 50 }).notNull(), // "cap", "tee", "jersey"
   hasVariants: boolean("has_variants").default(false).notNull(),
   imageUrl: text("image_url"),
   active: boolean("active").default(true).notNull(),

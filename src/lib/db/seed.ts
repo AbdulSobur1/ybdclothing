@@ -86,23 +86,23 @@ async function seed() {
   ]);
   console.log(`  ✓ YBD Cadet Cap 2 — ₦19,000`);
 
-  // 4. YBD Trucker Hat
-  const [truckerHat] = await db
+  // 4. YBD Trucker Cap (formerly Trucker Hat — hats now under Caps category)
+  const [truckerCap] = await db
     .insert(products)
     .values({
-      name: "YBD Trucker Hat",
-      description: "Classic trucker hat with mesh back and foam front. Lightweight and breathable for everyday wear.",
+      name: "YBD Trucker Cap",
+      description: "Classic trucker cap with mesh back and foam front. Lightweight and breathable for everyday wear.",
       basePrice: 10000, // ₦10,000
-      category: "hat",
+      category: "cap",
       hasVariants: false,
       imageUrl: null,
     })
     .returning();
 
   await db.insert(productVariants).values([
-    { productId: truckerHat.id, color: null, size: null, stockQuantity: 20, sku: "YBD-TH" },
+    { productId: truckerCap.id, color: null, size: null, stockQuantity: 20, sku: "YBD-TH" },
   ]);
-  console.log(`  ✓ YBD Trucker Hat — ₦10,000`);
+  console.log(`  ✓ YBD Trucker Cap — ₦10,000`);
 
   // 5. YBD Outta Space Tee
   const [outtaSpaceTee] = await db

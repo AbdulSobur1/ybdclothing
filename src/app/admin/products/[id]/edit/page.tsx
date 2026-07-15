@@ -262,7 +262,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                     >
                       <option value="cap">Cap</option>
                       <option value="tee">Tee</option>
-                      <option value="hat">Hat</option>
+                      <option value="jersey">Jersey</option>
                     </select>
                   </div>
                 </div>

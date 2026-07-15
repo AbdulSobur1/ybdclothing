@@ -7,7 +7,7 @@ import { WhatsAppButton } from "@/components/WhatsAppButton";
 export const metadata: Metadata = {
   title: "YBD Clothing — Nigerian Streetwear",
   description:
-    "Premium caps, tees, and hats for those who dare to stand out. Bold designs, quality craftsmanship — made in Nigeria.",
+    "Premium caps, tees, and jerseys for those who dare to stand out. Bold designs, quality craftsmanship — made in Nigeria.",
   keywords: ["streetwear", "Nigerian fashion", "caps", "tees", "YBD Clothing"],
   icons: {
     icon: "/logo-icon.svg",
