@@ -2,11 +2,27 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { config } from "@/lib/config";
 import { Mail, Check, Loader2 } from "lucide-react";
 
 export function Footer() {
+  const pathname = usePathname();
+
+  // Don't render the storefront footer on admin routes
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
+
   const currentYear = new Date().getFullYear();
+
+  // Social links from config — owner can update these via admin settings / env vars
+  const socialLinks = {
+    instagram: "https://www.instagram.com/Ybd___clothing_/",
+    tiktok: "https://www.tiktok.com/@ybd_clothing_",
+    email: "qudusolashile16@gmail.com",
+  };
+
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterStatus, setNewsletterStatus] = useState<"idle" | "loading" | "success">("idle");
 
@@ -128,7 +144,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="mailto:qudusolashile16@gmail.com"
+                  href={`mailto:${socialLinks.email}`}
                   className="inline-flex items-center gap-2 text-sm text-[#B8B2A3] hover:text-[#D4CFC2] transition-colors"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
@@ -137,7 +153,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="https://www.instagram.com/Ybd___clothing_/"
+                  href={socialLinks.instagram}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-sm text-[#B8B2A3] hover:text-[#D4CFC2] transition-colors"
@@ -148,7 +164,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="https://www.tiktok.com/@ybd_clothing_"
+                  href={socialLinks.tiktok}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-sm text-[#B8B2A3] hover:text-[#D4CFC2] transition-colors"

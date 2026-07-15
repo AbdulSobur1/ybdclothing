@@ -3,7 +3,10 @@ import type { NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 // Routes that require authentication
-const protectedRoutes = ["/checkout", "/orders", "/profile", "/wishlist"];
+const protectedRoutes = ["/checkout", "/orders", "/profile", "/wishlist", "/waitlist"];
+
+// Admin routes — require authentication, redirect to admin login
+const adminRoutes = ["/admin"];
 
 // Routes that should redirect logged-in users away (auth pages)
 const authRoutes = ["/auth/login", "/auth/signup"];
@@ -11,6 +14,14 @@ const authRoutes = ["/auth/login", "/auth/signup"];
 export async function middleware(request: NextRequest) {
   const { supabaseResponse, user } = await updateSession(request);
   const { pathname } = request.nextUrl;
+
+  // Admin routes — redirect to admin login if not authenticated
+  // Skip /admin/login itself to avoid redirect loops
+  if (adminRoutes.some((route) => pathname.startsWith(route) && pathname !== "/admin/login")) {
+    if (!user) {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
+  }
 
   // Protected routes — redirect to login if not authenticated
   if (protectedRoutes.some((route) => pathname.startsWith(route))) {

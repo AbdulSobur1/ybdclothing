@@ -1,13 +1,21 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { config } from "@/lib/config";
 import { MessageCircle } from "lucide-react";
 
 /**
  * Floating WhatsApp button for general support/questions.
- * Explicitly NOT part of the order confirmation flow.
+ * Hidden on admin routes.
  */
 export function WhatsAppButton() {
+  const pathname = usePathname();
+
+  // Don't render on admin routes
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
+
   const whatsappUrl = `https://wa.me/${config.whatsappNumber}`;
 
   return (

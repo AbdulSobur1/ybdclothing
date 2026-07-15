@@ -14,6 +14,11 @@ export function Navbar() {
   const [cartCount, setCartCount] = useState(0);
   const [supabase, setSupabase] = useState<ReturnType<typeof createClient>>(null);
 
+  // Don't render the storefront navbar on admin routes
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
+
   useEffect(() => {
     setSupabase(createClient());
   }, []);

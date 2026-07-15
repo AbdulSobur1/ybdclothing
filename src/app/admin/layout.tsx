@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   LayoutDashboard,
@@ -11,6 +11,7 @@ import {
   MapPin,
   Users,
   Settings,
+  MessageSquare,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -26,6 +27,7 @@ const sidebarLinks = [
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/delivery-zones", label: "Delivery Zones", icon: MapPin },
   { href: "/admin/customers", label: "Customers", icon: Users },
+  { href: "/admin/testimonials", label: "Testimonials", icon: MessageSquare },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
@@ -38,6 +40,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isAdmin, setIsAdmin] = useState(false);
   const [checking, setChecking] = useState(true);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+  const prevPendingCountRef = useRef(0);
+
+  // Login page renders bare (no sidebar, no auth check)
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
 
   useEffect(() => {
     checkAdmin();
@@ -46,7 +54,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   async function checkAdmin() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      router.push("/auth/login?redirect=/admin");
+      router.push("/admin/login");
       return;
     }
 
@@ -73,7 +81,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setChecking(false);
   }
 
-  // Fetch pending orders count for badge
+  // Fetch pending orders count for badge + new-order notification
   useEffect(() => {
     if (!isAdmin) return;
     const fetchPending = async () => {
@@ -81,15 +89,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         const res = await fetch("/api/admin/orders?status=pending_verification&limit=1");
         if (res.ok) {
           const data = await res.json();
-          setPendingOrdersCount(data.pagination?.total ?? 0);
+          const newCount = data.pagination?.total ?? 0;
+          setPendingOrdersCount(newCount);
+          // Detect new order — if count increased (skip initial fetch)
+          if (prevPendingCountRef.current > 0 && newCount > prevPendingCountRef.current) {
+            // Flash the page title for 5 seconds
+            const originalTitle = document.title;
+            document.title = `🆕 ${newCount} pending — YBD Admin`;
+            setTimeout(() => {
+              document.title = originalTitle;
+            }, 5000);
+          }
+          prevPendingCountRef.current = newCount;
         }
       } catch {
         // ignore
       }
     };
     fetchPending();
-    // Poll every 60 seconds
-    const interval = setInterval(fetchPending, 60000);
+    // Poll every 30 seconds
+    const interval = setInterval(fetchPending, 30000);
     return () => clearInterval(interval);
   }, [isAdmin]);
 
@@ -100,7 +119,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push("/auth/login");
+    router.push("/admin/login");
   };
 
   if (checking) {
