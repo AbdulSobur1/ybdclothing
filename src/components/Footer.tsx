@@ -18,7 +18,7 @@ export function Footer() {
 
   // Social links from config — owner can update these via admin settings / env vars
   const socialLinks = {
-    instagram: "https://www.instagram.com/Ybd___clothing_/",
+    instagram: "https://www.instagram.com/ybd__clothing_/",
     tiktok: "https://www.tiktok.com/@ybd_clothing_",
     email: "qudusolashile16@gmail.com",
   };

@@ -14,7 +14,7 @@ const SETTING_DEFAULTS: Record<string, string> = {
   resend_from: config.resendFrom,
   whatsapp_number: config.whatsappNumber,
   phone_number: config.phone,
-  instagram: "https://www.instagram.com/Ybd___clothing_/",
+  instagram: "https://www.instagram.com/ybd__clothing_/",
   tiktok: "https://www.tiktok.com/@ybd_clothing_",
 };
 

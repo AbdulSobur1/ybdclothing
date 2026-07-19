@@ -38,7 +38,7 @@ export default function AdminSettingsPage() {
         whatsappNumber: config.whatsappNumber,
         ownerEmail: config.ownerEmail,
         phoneNumber: config.phone,
-        instagram: "https://www.instagram.com/Ybd___clothing_/",
+        instagram: "https://www.instagram.com/ybd__clothing_/",
         tiktok: "https://www.tiktok.com/@ybd_clothing_",
       });
     }
