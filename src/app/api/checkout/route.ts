@@ -131,9 +131,10 @@ export async function POST(request: Request) {
   try {
     newOrder = await db.transaction(async (tx) => {
       // 1. Lock variant rows to prevent concurrent decrements
+      //    Use inArray for proper parameterized queries (sql.join needs SQL[] not raw numbers)
       if (variantIdsToLock.length > 0) {
         await tx.execute(
-          sql`SELECT id FROM ${productVariants} WHERE id IN (${sql.join(variantIdsToLock, sql`,`)}) FOR UPDATE`,
+          sql`SELECT id FROM ${productVariants} WHERE ${inArray(productVariants.id, variantIdsToLock)} FOR UPDATE`,
         );
       }
 

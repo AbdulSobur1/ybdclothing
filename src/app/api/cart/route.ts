@@ -34,7 +34,36 @@ export const GET = withErrorHandling(async function () {
 });
 
 /**
+ * Resolve the variant for a cart operation.
+ * If variantId is provided, look it up directly.
+ * Otherwise, fall back to the first variant of the product (for non-variant products).
+ * Returns the variant row and the normalized variantId to use in queries.
+ */
+async function resolveVariant(
+  productId: number,
+  variantId: number | null | undefined,
+): Promise<{ variant: typeof productVariants.$inferSelect | null; resolvedVariantId: number | null }> {
+  if (variantId) {
+    const [variant] = await db
+      .select()
+      .from(productVariants)
+      .where(eq(productVariants.id, variantId))
+      .limit(1);
+    return { variant: variant ?? null, resolvedVariantId: variantId };
+  }
+
+  const [variant] = await db
+    .select()
+    .from(productVariants)
+    .where(eq(productVariants.productId, productId))
+    .limit(1);
+
+  return { variant: variant ?? null, resolvedVariantId: variant?.id ?? null };
+}
+
+/**
  * POST /api/cart — Add item to cart (or increment quantity if already exists).
+ * Stock validation: prevents adding more than available stock.
  */
 export const POST = withErrorHandling(async function (request: Request) {
   const supabase = await createClient();
@@ -48,15 +77,43 @@ export const POST = withErrorHandling(async function (request: Request) {
   if (contentTypeError) return contentTypeError;
 
   const body = await request.json();
-  const { productId, variantId, quantity = 1 } = body;
+  const { productId, variantId: rawVariantId, quantity = 1 } = body;
 
   const idError = validatePositiveInteger(productId, "Product ID");
   if (idError) {
     return NextResponse.json({ error: idError }, { status: 400 });
   }
 
+  // Validate variantId if provided (can be null/undefined for non-variant products)
+  if (rawVariantId !== undefined && rawVariantId !== null) {
+    const vErr = validatePositiveInteger(rawVariantId, "Variant ID");
+    if (vErr) {
+      return NextResponse.json({ error: vErr }, { status: 400 });
+    }
+  }
+
   if (quantity < 1 || !Number.isInteger(quantity)) {
     return NextResponse.json({ error: "Quantity must be a positive integer" }, { status: 400 });
+  }
+
+  // ── Stock validation ──
+  // Resolve the variant (single DB call, reused below)
+  const { variant, resolvedVariantId } = await resolveVariant(productId, rawVariantId);
+
+  if (variant && variant.stockQuantity < 1) {
+    return NextResponse.json(
+      { error: "This item is currently out of stock" },
+      { status: 400 },
+    );
+  }
+
+  if (variant && variant.stockQuantity < quantity) {
+    return NextResponse.json(
+      {
+        error: `Only ${variant.stockQuantity} item${variant.stockQuantity !== 1 ? "s" : ""} available. You requested ${quantity}.`,
+      },
+      { status: 400 },
+    );
   }
 
   // Check if the same item already exists in cart
@@ -67,17 +124,31 @@ export const POST = withErrorHandling(async function (request: Request) {
       and(
         eq(cartItems.userId, user.id),
         eq(cartItems.productId, productId),
-        variantId ? eq(cartItems.variantId, variantId) : undefined,
+        resolvedVariantId ? eq(cartItems.variantId, resolvedVariantId) : undefined,
       ),
     )
     .limit(1);
 
   if (existing.length > 0) {
-    // Increment quantity
+    // Increment quantity — check stock against total (existing + new)
+    const totalQty = existing[0].quantity + quantity;
+
+    if (variant && totalQty > variant.stockQuantity) {
+      const canAddMore = Math.max(0, variant.stockQuantity - existing[0].quantity);
+      return NextResponse.json(
+        {
+          error: canAddMore > 0
+            ? `Only ${canAddMore} more item${canAddMore !== 1 ? "s" : ""} available. You already have ${existing[0].quantity} in your cart.`
+            : "No more stock available. You already have all available items in your cart.",
+        },
+        { status: 400 },
+      );
+    }
+
     await db
       .update(cartItems)
       .set({
-        quantity: existing[0].quantity + quantity,
+        quantity: totalQty,
         updatedAt: new Date(),
       })
       .where(eq(cartItems.id, existing[0].id));
@@ -86,7 +157,7 @@ export const POST = withErrorHandling(async function (request: Request) {
     await db.insert(cartItems).values({
       userId: user.id,
       productId,
-      variantId: variantId ?? null,
+      variantId: resolvedVariantId,
       quantity,
     });
   }
@@ -96,6 +167,7 @@ export const POST = withErrorHandling(async function (request: Request) {
 
 /**
  * PATCH /api/cart — Update item quantity.
+ * Stock validation: prevents setting quantity higher than available stock.
  */
 export const PATCH = withErrorHandling(async function (request: Request) {
   const supabase = await createClient();
@@ -124,12 +196,38 @@ export const PATCH = withErrorHandling(async function (request: Request) {
     await db
       .delete(cartItems)
       .where(and(eq(cartItems.id, itemId), eq(cartItems.userId, user.id)));
-  } else {
-    await db
-      .update(cartItems)
-      .set({ quantity, updatedAt: new Date() })
-      .where(and(eq(cartItems.id, itemId), eq(cartItems.userId, user.id)));
+
+    return NextResponse.json({ success: true });
   }
+
+  // ── Stock validation ──
+  // Look up the cart item to find the variant, then check stock
+  const [cartItem] = await db
+    .select()
+    .from(cartItems)
+    .where(and(eq(cartItems.id, itemId), eq(cartItems.userId, user.id)))
+    .limit(1);
+
+  if (!cartItem) {
+    return NextResponse.json({ error: "Cart item not found" }, { status: 404 });
+  }
+
+  // Resolve the variant for stock check (handles both variantId and fallback)
+  const { variant } = await resolveVariant(cartItem.productId, cartItem.variantId);
+
+  if (variant && quantity > variant.stockQuantity) {
+    return NextResponse.json(
+      {
+        error: `Only ${variant.stockQuantity} item${variant.stockQuantity !== 1 ? "s" : ""} available. You requested ${quantity}.`,
+      },
+      { status: 400 },
+    );
+  }
+
+  await db
+    .update(cartItems)
+    .set({ quantity, updatedAt: new Date() })
+    .where(and(eq(cartItems.id, itemId), eq(cartItems.userId, user.id)));
 
   return NextResponse.json({ success: true });
 });

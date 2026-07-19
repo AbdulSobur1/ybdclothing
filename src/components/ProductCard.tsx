@@ -81,7 +81,7 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
 
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
-  const [cartError, setCartError] = useState(false);
+  const [cartError, setCartError] = useState<string | false>(false);
   const [wishlisted, setWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const [wishlistError, setWishlistError] = useState(false);
@@ -165,13 +165,13 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
       } else {
         const data = await res.json().catch(() => ({}));
         console.error("Cart API error:", data.error || res.statusText);
-        setCartError(true);
-        setTimeout(() => setCartError(false), 2000);
+        setCartError(data.error || "Failed — try again");
+        setTimeout(() => setCartError(false), 3000);
       }
     } catch (err) {
       console.error("Cart fetch error:", err);
-      setCartError(true);
-      setTimeout(() => setCartError(false), 2000);
+      setCartError("Failed — try again");
+      setTimeout(() => setCartError(false), 3000);
     } finally {
       setAdding(false);
     }
@@ -368,7 +368,7 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
                 : added
                   ? "bg-emerald-600 text-white shadow-sm"
                   : cartError
-                    ? "bg-red-500 text-white"
+                    ? "bg-red-500 text-white animate-shake"
                     : "bg-[#4A6B6D] text-white hover:bg-[#3A5557] active:scale-[0.97] shadow-sm hover:shadow-md"
             }`}
           >
@@ -381,7 +381,7 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
                 <Check className="h-4 w-4" /> Added
               </>
             ) : cartError ? (
-              <span>Failed — try again</span>
+              <span className="text-[11px]">{cartError}</span>
             ) : (
               <>
                 <ShoppingBag className="h-4 w-4" /> Add to Cart

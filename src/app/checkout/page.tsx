@@ -157,7 +157,7 @@ function CheckoutContent() {
 
       if (!orderRes.ok) {
         console.error("Checkout error:", orderData.error);
-        setError("Failed to place order. Please try again.");
+        setError(orderData.error || "Failed to place order. Please try again.");
         setPlacing(false);
         return;
       }
@@ -176,7 +176,8 @@ function CheckoutContent() {
         });
       }
     } catch (err) {
-      setError("Something went wrong. Please try again.");
+      console.error("Checkout fetch error:", err);
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setPlacing(false);
     }
@@ -546,6 +547,11 @@ function CheckoutContent() {
 
         {/* Mobile sticky order bar */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E0D8C8] p-4 lg:hidden z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+          {error && (
+            <div className="mb-3 p-3 rounded-lg bg-red-50 text-red-700 text-xs leading-tight">
+              {error}
+            </div>
+          )}
           <div className="flex items-center justify-between mb-3">
             <div>
               <p className="text-xs text-[#8A9283]">Total</p>
