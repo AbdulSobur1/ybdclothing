@@ -28,11 +28,13 @@ export const deliveryMethodEnum = pgEnum("delivery_method", ["pickup", "delivery
 // ──────────────────────────────────────────────
 // Profiles (extends Supabase Auth users)
 // ──────────────────────────────────────────────
+// FK to auth.users is managed via raw SQL migration (Drizzle can't reference
+// the Supabase auth schema directly — see migration 0007)
 
 export const profiles = pgTable("profiles", {
   id: uuid("id")
     .primaryKey()
-    .references(() => authUsers.id, { onDelete: "cascade" }),
+    .notNull(),
   fullName: varchar("full_name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   phone: varchar("phone", { length: 50 }),
@@ -78,8 +80,7 @@ export const productVariants = pgTable("product_variants", {
 export const cartItems = pgTable("cart_items", {
   id: serial("id").primaryKey(),
   userId: uuid("user_id")
-    .notNull()
-    .references(() => authUsers.id, { onDelete: "cascade" }),
+    .notNull(),
   productId: integer("product_id")
     .notNull()
     .references(() => products.id, { onDelete: "cascade" }),
@@ -98,8 +99,7 @@ export const cartItems = pgTable("cart_items", {
 export const wishlistItems = pgTable("wishlist_items", {
   id: serial("id").primaryKey(),
   userId: uuid("user_id")
-    .notNull()
-    .references(() => authUsers.id, { onDelete: "cascade" }),
+    .notNull(),
   productId: integer("product_id")
     .notNull()
     .references(() => products.id, { onDelete: "cascade" }),
@@ -116,8 +116,7 @@ export const wishlistItems = pgTable("wishlist_items", {
 export const waitlistEntries = pgTable("waitlist_entries", {
   id: serial("id").primaryKey(),
   userId: uuid("user_id")
-    .notNull()
-    .references(() => authUsers.id, { onDelete: "cascade" }),
+    .notNull(),
   productId: integer("product_id")
     .notNull()
     .references(() => products.id, { onDelete: "cascade" }),
@@ -166,8 +165,7 @@ export const deliveryZones = pgTable("delivery_zones", {
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   userId: uuid("user_id")
-    .notNull()
-    .references(() => authUsers.id, { onDelete: "cascade" }),
+    .notNull(),
   status: orderStatusEnum("status").notNull().default("pending_payment"),
   deliveryMethod: deliveryMethodEnum("delivery_method"),
   deliveryZoneId: integer("delivery_zone_id").references(() => deliveryZones.id, {
@@ -212,9 +210,7 @@ export const orderNotes = pgTable("order_notes", {
     .notNull()
     .references(() => orders.id, { onDelete: "cascade" }),
   note: text("note").notNull(),
-  createdBy: uuid("created_by").references(() => authUsers.id, {
-    onDelete: "set null",
-  }),
+  createdBy: uuid("created_by"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -232,12 +228,4 @@ export const testimonials = pgTable("testimonials", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// ──────────────────────────────────────────────
-// Reference to Supabase auth.users (for FK)
-// Drizzle doesn't manage auth.users — this is just
-// so we can reference it in FK constraints.
-// ──────────────────────────────────────────────
 
-export const authUsers = pgTable("auth.users", { id: uuid("id").primaryKey() }, (table) => ({
-  id: table.id,
-}));
