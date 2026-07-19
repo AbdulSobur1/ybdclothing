@@ -97,73 +97,98 @@ export function requireContentType(
 }
 
 // ──────────────────────────────────────────────
-// Simple in-memory rate limiter
+// Rate limiter (Supabase-backed for serverless compatibility)
 // ──────────────────────────────────────────────
 
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
-
-const rateLimitStore = new Map<string, RateLimitEntry>();
-
-// Clean up expired entries every 5 minutes
-if (typeof setInterval !== "undefined") {
-  setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of rateLimitStore) {
-      if (entry.resetAt < now) {
-        rateLimitStore.delete(key);
-      }
-    }
-  }, 5 * 60 * 1000);
-}
+import { db } from "@/lib/db";
+import { rateLimits } from "@/lib/db/schema";
+import { and, eq, gt, lt } from "drizzle-orm";
 
 /**
- * Creates a rate limiter keyed by a combination of identifier (e.g., IP + route).
- * Uses a sliding window approach.
+ * Serverless-compatible rate limiter using Supabase (Drizzle) as the backend store.
+ *
+ * Works across all Vercel function instances because all instances share
+ * the same Postgres database. Uses upsert semantics with a rolling window.
  *
  * @param identifier - Unique key (e.g., `ip:route`)
  * @param maxRequests - Maximum requests allowed in the window
  * @param windowMs - Time window in milliseconds (default: 60 seconds)
  * @returns Object with `allowed` boolean and `remaining` count
  */
-export function checkRateLimit(
+export async function checkRateLimit(
   identifier: string,
   maxRequests: number = 30,
   windowMs: number = 60_000,
-): { allowed: boolean; remaining: number } {
-  const now = Date.now();
-  const entry = rateLimitStore.get(identifier);
+): Promise<{ allowed: boolean; remaining: number }> {
+  const now = new Date();
+  const resetAt = new Date(now.getTime() + windowMs);
 
-  if (!entry || entry.resetAt < now) {
-    // First request or window expired — start new window
-    rateLimitStore.set(identifier, { count: 1, resetAt: now + windowMs });
+  try {
+    // Clean up expired entries for this identifier
+    await db
+      .delete(rateLimits)
+      .where(
+        and(
+          eq(rateLimits.identifier, identifier),
+          lt(rateLimits.resetAt, now), // expired
+        ),
+      );
+
+    // Try to find and update an existing non-expired entry
+    const [existing] = await db
+      .select()
+      .from(rateLimits)
+      .where(
+        and(
+          eq(rateLimits.identifier, identifier),
+          gt(rateLimits.resetAt, now), // still within window
+        ),
+      )
+      .limit(1);
+
+    if (existing) {
+      if (existing.count >= maxRequests) {
+        return { allowed: false, remaining: 0 };
+      }
+
+      await db
+        .update(rateLimits)
+        .set({ count: existing.count + 1 })
+        .where(eq(rateLimits.id, existing.id));
+
+      return { allowed: true, remaining: maxRequests - existing.count - 1 };
+    }
+
+    // No active entry — insert a new one
+    await db.insert(rateLimits).values({
+      identifier,
+      count: 1,
+      resetAt,
+    });
+
     return { allowed: true, remaining: maxRequests - 1 };
+  } catch (error) {
+    // If rate limiting fails (e.g., DB hiccup), allow the request through
+    // rather than blocking legitimate traffic
+    console.error("Rate limiter error:", error);
+    return { allowed: true, remaining: maxRequests };
   }
-
-  if (entry.count >= maxRequests) {
-    return { allowed: false, remaining: 0 };
-  }
-
-  entry.count++;
-  return { allowed: true, remaining: maxRequests - entry.count };
 }
 
 /**
  * Middleware-style rate limit check for API routes.
  * Returns a 429 response if rate limited, or `null` if allowed.
  */
-export function rateLimit(
+export async function rateLimit(
   request: Request,
   maxRequests: number = 30,
   windowMs: number = 60_000,
-): NextResponse<{ error: string; retryAfter: number }> | null {
+): Promise<NextResponse<{ error: string; retryAfter: number }> | null> {
   const ip = request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip") ?? "unknown";
   const url = new URL(request.url);
   const identifier = `${ip}:${url.pathname}`;
 
-  const result = checkRateLimit(identifier, maxRequests, windowMs);
+  const result = await checkRateLimit(identifier, maxRequests, windowMs);
   if (!result.allowed) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later.", retryAfter: Math.ceil(windowMs / 1000) },

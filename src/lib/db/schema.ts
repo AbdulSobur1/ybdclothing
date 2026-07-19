@@ -6,7 +6,6 @@ import {
   serial,
   text,
   timestamp,
-  unique,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -126,10 +125,19 @@ export const waitlistEntries = pgTable("waitlist_entries", {
     onDelete: "set null",
   }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-}, (table) => ({
-  // Prevent duplicate waitlist entries for same user + product + variant
-  uniqueUserProductVariant: unique().on(table.userId, table.productId, table.variantId),
-}));
+});
+
+// ──────────────────────────────────────────────
+// Rate Limits (for serverless-compatible rate limiting)
+// ──────────────────────────────────────────────
+
+export const rateLimits = pgTable("rate_limits", {
+  id: serial("id").primaryKey(),
+  identifier: varchar("identifier", { length: 255 }).notNull(),
+  count: integer("count").default(1).notNull(),
+  resetAt: timestamp("reset_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 // ──────────────────────────────────────────────
 

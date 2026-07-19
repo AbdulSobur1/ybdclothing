@@ -3,7 +3,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { cartItems, productVariants, products } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
-import { withErrorHandling } from "@/lib/api-helpers";
+import { withErrorHandling, requireContentType, validatePositiveInteger } from "@/lib/api-helpers";
 
 /**
  * GET /api/cart — Fetch the current user's cart items with product details.
@@ -44,11 +44,19 @@ export const POST = withErrorHandling(async function (request: Request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
+  const contentTypeError = requireContentType(request);
+  if (contentTypeError) return contentTypeError;
+
   const body = await request.json();
   const { productId, variantId, quantity = 1 } = body;
 
-  if (!productId || quantity < 1) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  const idError = validatePositiveInteger(productId, "Product ID");
+  if (idError) {
+    return NextResponse.json({ error: idError }, { status: 400 });
+  }
+
+  if (quantity < 1 || !Number.isInteger(quantity)) {
+    return NextResponse.json({ error: "Quantity must be a positive integer" }, { status: 400 });
   }
 
   // Check if the same item already exists in cart
@@ -97,11 +105,19 @@ export const PATCH = withErrorHandling(async function (request: Request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
+  const contentTypeError = requireContentType(request);
+  if (contentTypeError) return contentTypeError;
+
   const body = await request.json();
   const { itemId, quantity } = body;
 
-  if (!itemId || quantity < 0) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  const idError = validatePositiveInteger(itemId, "Item ID");
+  if (idError) {
+    return NextResponse.json({ error: idError }, { status: 400 });
+  }
+
+  if (quantity < 0 || !Number.isInteger(quantity)) {
+    return NextResponse.json({ error: "Quantity must be a non-negative integer" }, { status: 400 });
   }
 
   if (quantity === 0) {
@@ -129,11 +145,15 @@ export const DELETE = withErrorHandling(async function (request: Request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
+  const contentTypeError = requireContentType(request);
+  if (contentTypeError) return contentTypeError;
+
   const body = await request.json();
   const { itemId } = body;
 
-  if (!itemId) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  const idError = validatePositiveInteger(itemId, "Item ID");
+  if (idError) {
+    return NextResponse.json({ error: idError }, { status: 400 });
   }
 
   await db
