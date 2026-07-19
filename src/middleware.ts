@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 // Routes that require authentication
-const protectedRoutes = ["/checkout", "/orders", "/profile", "/wishlist", "/waitlist"];
+const protectedRoutes = ["/checkout", "/orders", "/profile", "/wishlist"];
 
 // Admin routes — require authentication, redirect to admin login
 const adminRoutes = ["/admin"];

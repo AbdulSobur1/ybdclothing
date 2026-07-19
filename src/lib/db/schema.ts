@@ -110,23 +110,6 @@ export const wishlistItems = pgTable("wishlist_items", {
 });
 
 // ──────────────────────────────────────────────
-// Waitlist Entries
-// ──────────────────────────────────────────────
-
-export const waitlistEntries = pgTable("waitlist_entries", {
-  id: serial("id").primaryKey(),
-  userId: uuid("user_id")
-    .notNull(),
-  productId: integer("product_id")
-    .notNull()
-    .references(() => products.id, { onDelete: "cascade" }),
-  variantId: integer("variant_id").references(() => productVariants.id, {
-    onDelete: "set null",
-  }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-// ──────────────────────────────────────────────
 // Rate Limits (for serverless-compatible rate limiting)
 // ──────────────────────────────────────────────
 

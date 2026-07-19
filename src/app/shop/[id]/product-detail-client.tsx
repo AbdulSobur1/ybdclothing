@@ -7,7 +7,6 @@ import {
   Check,
   Loader2,
   Heart,
-  Clock,
   Package,
 } from "lucide-react";
 import { useState } from "react";
@@ -93,11 +92,6 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const [added, setAdded] = useState(false);
   const [cartError, setCartError] = useState(false);
 
-  // Waitlist state
-  const [waitlisting, setWaitlisting] = useState(false);
-  const [waitlisted, setWaitlisted] = useState(false);
-  const [waitlistError, setWaitlistError] = useState(false);
-
   // Wishlist state
   const [wishlisted, setWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
@@ -142,41 +136,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
     }
   };
 
-  const handleAddToWaitlist = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      window.location.href = "/auth/login?redirect=/shop";
-      return;
-    }
-
-    setWaitlisting(true);
-    try {
-      const res = await fetch("/api/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId: product.id,
-          variantId: selectedVariantId,
-        }),
-      });
-      if (res.ok) {
-        setWaitlisted(true);
-        setTimeout(() => setWaitlisted(false), 3000);
-      } else {
-        const data = await res.json().catch(() => ({}));
-        setWaitlistError(true);
-        setTimeout(() => setWaitlistError(false), 3000);
-        console.error("Waitlist API error:", data.error || res.statusText);
-      }
-    } catch {
-      setWaitlistError(true);
-      setTimeout(() => setWaitlistError(false), 3000);
-    } finally {
-      setWaitlisting(false);
-    }
-  };
-
-  const handleWishlist = async () => {
+  const handleAddToWishlist = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       window.location.href = "/auth/login?redirect=/shop";
@@ -235,10 +195,10 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
         {/* Wishlist heart */}
         <button
-          onClick={handleWishlist}
+          onClick={handleAddToWishlist}
           disabled={wishlistLoading}
           className={`absolute top-4 right-4 p-2.5 rounded-full bg-white/90 backdrop-blur-sm shadow-sm transition-all ${
-            wishlistError ? "bg-red-50" : "hover:bg-rose-50"
+            wishlisted ? "bg-rose-100" : wishlistError ? "bg-red-50" : "hover:bg-rose-50"
           }`}
           title={wishlistError ? "Failed — try again" : wishlisted ? "Remove from wishlist" : "Add to wishlist"}
         >
@@ -383,29 +343,29 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             )}
           </button>
 
-          {/* Add to Waitlist */}
+          {/* Add to Wishlist */}
           <button
-            onClick={handleAddToWaitlist}
-            disabled={waitlisting}
+            onClick={handleAddToWishlist}
+            disabled={wishlistLoading}
             className={`flex-1 py-3 px-6 rounded-full text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 border ${
-              waitlisted
-                ? "bg-emerald-50 border-emerald-300 text-emerald-700"
-                : waitlistError
+              wishlisted
+                ? "bg-rose-50 border-rose-300 text-rose-700"
+                : wishlistError
                   ? "bg-red-50 border-red-300 text-red-600"
                   : "border-[#A6822E] text-[#A6822E] hover:bg-[#A6822E]/5 active:scale-[0.97]"
             }`}
           >
-            {waitlisting ? (
+            {wishlistLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
-            ) : waitlisted ? (
+            ) : wishlisted ? (
               <>
-                <Check className="h-4 w-4" /> You&apos;re on the list ✓
+                <Heart className="h-4 w-4 fill-rose-500 text-rose-500" /> Wishlisted ❤️
               </>
-            ) : waitlistError ? (
+            ) : wishlistError ? (
               <span>Failed — try again</span>
             ) : (
               <>
-                <Clock className="h-4 w-4" /> Add to Waitlist
+                <Heart className="h-4 w-4" /> Add to Wishlist
               </>
             )}
           </button>

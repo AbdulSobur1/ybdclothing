@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
-import { ShoppingBag, Check, Loader2, Heart, Clock } from "lucide-react";
+import { ShoppingBag, Check, Loader2, Heart } from "lucide-react";
 import { useState, useEffect } from "react";
 import type { ProductWithVariants } from "@/types/product";
 import { createClient } from "@/lib/supabase/client";
@@ -85,9 +85,6 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
   const [wishlisted, setWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const [wishlistError, setWishlistError] = useState(false);
-  const [waitlisting, setWaitlisting] = useState(false);
-  const [waitlisted, setWaitlisted] = useState(false);
-  const [waitlistError, setWaitlistError] = useState(false);
 
   // Check wishlist status on mount
   useEffect(() => {
@@ -104,38 +101,39 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
     checkWishlist();
   }, [product.id]);
 
-  const handleAddToWaitlist = async () => {
+  const handleAddToWishlist = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       window.location.href = "/auth/login?redirect=/shop";
       return;
     }
-
-    setWaitlisting(true);
+    setWishlistLoading(true);
+    setWishlistError(false);
     try {
-      const res = await fetch("/api/waitlist", {
+      const res = await fetch("/api/wishlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId: product.id,
-          variantId: selectedVariantId,
-        }),
+        body: JSON.stringify({ productId: product.id, variantId: selectedVariantId }),
       });
-
       if (res.ok) {
-        setWaitlisted(true);
-        setTimeout(() => setWaitlisted(false), 3000);
+        const data = await res.json();
+        setWishlisted(data.wishlisted);
+        setTimeout(() => {
+          if (data.wishlisted) setWishlisted(true);
+        }, 100);
       } else {
         const data = await res.json().catch(() => ({}));
-        setWaitlistError(true);
-        setTimeout(() => setWaitlistError(false), 3000);
-        console.error("Waitlist API error:", data.error || res.statusText);
+        console.error("Wishlist API error:", data.error || res.statusText);
+        setWishlistError(true);
+        setTimeout(() => setWishlistError(false), 3000);
       }
-    } catch {
-      setWaitlistError(true);
-      setTimeout(() => setWaitlistError(false), 3000);
+    } catch (err) {
+      console.error("Wishlist fetch error:", err);
+      setWishlistError(true);
+      setTimeout(() => setWishlistError(false), 3000);
     } finally {
-      setWaitlisting(false);
+      setWishlistLoading(false);
     }
   };
 
@@ -179,7 +177,8 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
     }
   };
 
-  const handleWishlist = async () => {
+  const handleWishlist = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       window.location.href = "/auth/login?redirect=/shop";
@@ -244,9 +243,9 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
           )}
         </Link>
 
-        {/* Wishlist heart — positioned inside the container but OUTSIDE the Link */}
+        {/* Wishlist heart — positioned on the image */}
         <button
-          onClick={handleWishlist}
+          onClick={handleAddToWishlist}
           disabled={wishlistLoading}
           className={`absolute top-3 right-3 p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-sm transition-all z-10 ${
             wishlisted
@@ -390,29 +389,29 @@ export function ProductCard({ product, onCartUpdated }: ProductCardProps) {
             )}
           </button>
 
-          {/* Add to waitlist button */}
+          {/* Add to Wishlist button */}
           <button
-            onClick={handleAddToWaitlist}
-            disabled={waitlisting}
+            onClick={handleAddToWishlist}
+            disabled={wishlistLoading}
             className={`w-full py-2 rounded-full text-xs font-medium transition-all duration-200 flex items-center justify-center gap-1.5 border ${
-              waitlisted
-                ? "bg-emerald-50 border-emerald-300 text-emerald-700"
-                : waitlistError
+              wishlisted
+                ? "bg-rose-50 border-rose-300 text-rose-700"
+                : wishlistError
                   ? "bg-red-50 border-red-300 text-red-600"
                   : "border-[#A6822E] text-[#A6822E] hover:bg-[#A6822E]/5 active:scale-[0.97]"
             }`}
           >
-            {waitlisting ? (
+            {wishlistLoading ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : waitlisted ? (
+            ) : wishlisted ? (
               <>
-                <Check className="h-3.5 w-3.5" /> You&apos;re on the list ✓
+                <Heart className="h-3.5 w-3.5 fill-rose-500 text-rose-500" /> Wishlisted ❤️
               </>
-            ) : waitlistError ? (
+            ) : wishlistError ? (
               <span>Failed — try again</span>
             ) : (
               <>
-                <Clock className="h-3.5 w-3.5" /> Add to Waitlist
+                <Heart className="h-3.5 w-3.5" /> Add to Wishlist
               </>
             )}
           </button>

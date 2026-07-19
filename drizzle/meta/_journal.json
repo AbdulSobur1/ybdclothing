@@ -57,6 +57,13 @@
       "when": 1784443000000,
       "tag": "0007_fix_auth_fks",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1784444000000,
+      "tag": "0008_drop_waitlist",
+      "breakpoints": true
     }
   ]
 }
