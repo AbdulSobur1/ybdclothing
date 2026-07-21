@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
-import { orders, orderItems, orderNotes, deliveryZones, profiles } from "@/lib/db/schema";
+import { orders, orderItems, orderNotes, deliveryZones, profiles, products, productVariants } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -9,7 +9,7 @@ import { config } from "@/lib/config";
 import { OrderStatusBadge } from "@/components/OrderStatusBadge";
 import { OrderStatusUpdateForm } from "./status-form";
 import { NotesSection } from "./notes-section";
-import { ArrowLeft, Package, User, MapPin, ExternalLink } from "lucide-react";
+import { ArrowLeft, Package, User, MapPin, ExternalLink, ImageIcon, Hash, Ruler, Palette } from "lucide-react";
 
 interface AdminOrderPageProps {
   params: Promise<{ id: string }>;
@@ -63,9 +63,14 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderPagePro
     notFound();
   }
 
+  // Fetch order items with product and variant joins for full detail.
+  // Drizzle .select() with joins returns keys by table name:
+  // { order_items, products, product_variants }
   const items = await db
     .select()
     .from(orderItems)
+    .leftJoin(products, eq(orderItems.productId, products.id))
+    .leftJoin(productVariants, eq(orderItems.variantId, productVariants.id))
     .where(eq(orderItems.orderId, orderId));
 
   const rawNotes = await db
@@ -120,20 +125,72 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderPagePro
           {/* Items */}
           <div className="bg-[#16213e] rounded-xl border border-white/5 p-6">
             <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-              <Package className="h-4 w-4 text-[#A6822E]" /> Items
+              <Package className="h-4 w-4 text-[#A6822E]" /> Items ({items.length})
             </h2>
             <div className="divide-y divide-white/5">
-              {items.map((item) => (
-                <div key={item.id} className="flex justify-between items-center py-3 first:pt-0 last:pb-0">
-                  <div>
-                    <p className="text-sm font-medium text-white">{item.nameSnapshot}</p>
-                    <p className="text-xs text-gray-400">× {item.quantity}</p>
+              {items.map(({ order_items: item, products: product, product_variants: variant }) => {
+                // Use snapshot values with live data as fallback.
+                // Snapshots survive variant deletion (ON DELETE SET NULL).
+                const imageUrl = item.imageSnapshot ?? product?.imageUrl ?? null;
+                const color = item.colorSnapshot ?? variant?.color ?? null;
+                const size = item.sizeSnapshot ?? variant?.size ?? null;
+                const sku = variant?.sku ?? null;
+
+                return (
+                  <div key={item.id} className="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
+                    {/* Thumbnail */}
+                    <div className="w-14 h-14 rounded-lg bg-white/5 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                      {imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          alt={item.nameSnapshot}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <ImageIcon className="h-5 w-5 text-gray-500" />
+                      )}
+                    </div>
+                    {/* Details */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white truncate">
+                        {item.nameSnapshot}
+                      </p>
+                      {/* Variant info row */}
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                        {color && (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-gray-400">
+                            <Palette className="h-3 w-3" />
+                            {color}
+                          </span>
+                        )}
+                        {size && (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-gray-400">
+                            <Ruler className="h-3 w-3" />
+                            {size}
+                          </span>
+                        )}
+                        {sku && (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-gray-500">
+                            <Hash className="h-3 w-3" />
+                            {sku}
+                          </span>
+                        )}
+                      </div>
+                      {/* Unit price */}
+                      <p className="text-[11px] text-gray-500 mt-0.5">
+                        {formatPrice(item.priceSnapshot)} each
+                      </p>
+                    </div>
+                    {/* Quantity & line total */}
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-sm font-medium text-white">
+                        {formatPrice(item.priceSnapshot * item.quantity)}
+                      </p>
+                      <p className="text-[11px] text-gray-500">× {item.quantity}</p>
+                    </div>
                   </div>
-                  <span className="text-sm font-medium text-white">
-                    {formatPrice(item.priceSnapshot * item.quantity)}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <div className="border-t border-white/5 mt-3 pt-3 flex justify-between items-center">
               <span className="text-sm text-gray-400">Subtotal</span>

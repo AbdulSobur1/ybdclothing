@@ -177,7 +177,8 @@ export async function POST(request: Request) {
         })
         .returning();
 
-      // 5. Insert order items (snapshot product name + price)
+      // 5. Insert order items (snapshot product name, price, and variant details)
+      //    The variant snapshots survive even if a variant is later deleted.
       for (const item of cartItemsList) {
         await tx.insert(orderItems).values({
           orderId: created.id,
@@ -186,6 +187,9 @@ export async function POST(request: Request) {
           nameSnapshot: item.product!.name,
           priceSnapshot: item.product!.basePrice,
           quantity: item.quantity,
+          colorSnapshot: item.variant?.color ?? null,
+          sizeSnapshot: item.variant?.size ?? null,
+          imageSnapshot: item.product!.imageUrl ?? null,
         });
       }
 

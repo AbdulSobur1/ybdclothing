@@ -1,13 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
-import { orders, orderItems, orderItems as orderItemsTable, deliveryZones, products, productVariants } from "@/lib/db/schema";
+import { orders, orderItems, deliveryZones, products, productVariants } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
 import { config } from "@/lib/config";
 import { OrderStatusBadge, OrderStatusTimeline } from "@/components/OrderStatusBadge";
-import { ArrowLeft, Package, MapPin, Receipt, Banknote, MessageCircle } from "lucide-react";
+import { ArrowLeft, Package, MapPin, Receipt, Banknote, MessageCircle, ImageIcon, Ruler, Palette, Hash } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
 import { ReorderButton } from "./reorder-button";
 
@@ -39,10 +39,13 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
     notFound();
   }
 
+  // Fetch order items with product and variant joins for full detail
   const items = await db
     .select()
-    .from(orderItemsTable)
-    .where(eq(orderItemsTable.orderId, orderId));
+    .from(orderItems)
+    .leftJoin(products, eq(orderItems.productId, products.id))
+    .leftJoin(productVariants, eq(orderItems.variantId, productVariants.id))
+    .where(eq(orderItems.orderId, orderId));
 
   let zoneName = null;
   if (order.deliveryZoneId) {
@@ -85,20 +88,68 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
         {/* Items */}
         <div className="bg-white rounded-xl shadow-sm p-6 border border-[#E0D8C8] mb-6">
           <h2 className="text-sm font-semibold text-[#5A5A4A] uppercase tracking-wider mb-4">
-            Items
+            Items ({items.length})
           </h2>
-          <div className="space-y-3">
-            {items.map((item) => (
-              <div key={item.id} className="flex justify-between items-center py-2 border-b border-[#E0D8C8]/50 last:border-0">
-                <div>
-                  <p className="font-medium text-[#2C2C2C]">{item.nameSnapshot}</p>
-                  <p className="text-sm text-[#8A9283]">Qty: {item.quantity}</p>
+          <div className="space-y-4">
+            {items.map(({ order_items: item, products: product, product_variants: variant }) => {
+              // Use snapshot values with live data as fallback
+              const imageUrl = item.imageSnapshot ?? product?.imageUrl ?? null;
+              const color = item.colorSnapshot ?? variant?.color ?? null;
+              const size = item.sizeSnapshot ?? variant?.size ?? null;
+              const sku = variant?.sku ?? null;
+
+              return (
+                <div key={item.id} className="flex items-center gap-4 py-3 border-b border-[#E0D8C8]/50 last:border-0">
+                  {/* Thumbnail */}
+                  <div className="w-16 h-16 rounded-lg bg-[#E8E2D4] flex-shrink-0 overflow-hidden flex items-center justify-center">
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt={item.nameSnapshot}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <ImageIcon className="h-6 w-6 text-[#B8B2A3]" />
+                    )}
+                  </div>
+                  {/* Details */}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-[#2C2C2C] truncate">
+                      {item.nameSnapshot}
+                    </p>
+                    {/* Variant details row */}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                      {color && (
+                        <span className="inline-flex items-center gap-1 text-xs text-[#8A9283]">
+                          <Palette className="h-3 w-3" />
+                          {color}
+                        </span>
+                      )}
+                      {size && (
+                        <span className="inline-flex items-center gap-1 text-xs text-[#8A9283]">
+                          <Ruler className="h-3 w-3" />
+                          {size}
+                        </span>
+                      )}
+                      {sku && (
+                        <span className="inline-flex items-center gap-1 text-xs text-[#B8B2A3]">
+                          <Hash className="h-3 w-3" />
+                          {sku}
+                        </span>
+                      )}
+                    </div>
+                    {/* Unit price */}
+                    <p className="text-xs text-[#B8B2A3] mt-0.5">
+                      {formatPrice(item.priceSnapshot)} each × {item.quantity}
+                    </p>
+                  </div>
+                  {/* Line total */}
+                  <p className="font-medium text-[#4A6B6D] text-sm whitespace-nowrap">
+                    {formatPrice(item.priceSnapshot * item.quantity)}
+                  </p>
                 </div>
-                <p className="font-medium text-[#4A6B6D]">
-                  {formatPrice(item.priceSnapshot * item.quantity)}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="border-t border-[#E0D8C8] mt-4 pt-4 space-y-2 text-sm">

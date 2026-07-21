@@ -181,6 +181,10 @@ export const orderItems = pgTable("order_items", {
   nameSnapshot: varchar("name_snapshot", { length: 255 }).notNull(),
   priceSnapshot: integer("price_snapshot").notNull(), // in Naira
   quantity: integer("quantity").notNull().default(1),
+  // Variant detail snapshots (captured at order time — survives variant deletion)
+  colorSnapshot: varchar("color_snapshot", { length: 100 }),
+  sizeSnapshot: varchar("size_snapshot", { length: 50 }),
+  imageSnapshot: text("image_snapshot"),
 });
 
 // ──────────────────────────────────────────────
